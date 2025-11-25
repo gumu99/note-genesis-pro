@@ -338,18 +338,20 @@ export const GeneratorForm = () => {
 
       {generatedNotes && (
         <Card className="p-6 bg-[rgba(20,20,20,0.8)] border-neon-purple/30 shadow-[0_0_30px_rgba(180,0,255,0.6)] animate-scale-in">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold text-white">Generated Explanation</h2>
-            <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">Generated Explanation</h2>
+            <div className="flex gap-2 flex-shrink-0">
               <Button
                 onClick={copyToClipboard}
                 variant="outline"
+                size="sm"
                 className="bg-white text-black border-white hover:bg-white/90 hover:scale-105 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] transition-all duration-200 active:animate-button-press"
               >
                 Copy
               </Button>
               <Button
                 onClick={downloadPDF}
+                size="sm"
                 className="bg-black text-white border-2 border-white hover:bg-black/90 hover:scale-105 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] transition-all duration-200 active:animate-button-press"
               >
                 <Download className="w-4 h-4 mr-2" />
@@ -357,10 +359,6 @@ export const GeneratorForm = () => {
               </Button>
             </div>
           </div>
-          
-          <p className="text-sm text-yellow-400 mb-4 flex items-center gap-2">
-            ⚠️ PDF download works on PC only — may not work on mobile devices.
-          </p>
           
           <div className="bg-black/40 p-6 rounded-lg border border-neon-purple/20">
             <div 
