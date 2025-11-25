@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { FileText, Lightbulb, HelpCircle, Download, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 
@@ -26,25 +25,95 @@ export const GeneratorForm = () => {
     setGeneratedNotes("");
 
     try {
-      const { data, error } = await supabase.functions.invoke("generate-notes", {
-        body: { text, mode },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-notes`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ text, mode }),
+        }
+      );
 
-      if (error) throw error;
-
-      if (data?.notes) {
-        setGeneratedNotes(data.notes);
-        toast.success("Notes generated successfully!");
+      if (!response.ok || !response.body) {
+        if (response.status === 429) {
+          toast.error("Rate limit exceeded. Please try again later.");
+        } else if (response.status === 402) {
+          toast.error("Payment required. Please add funds to your workspace.");
+        } else {
+          toast.error("Failed to generate notes. Please try again.");
+        }
+        setIsLoading(false);
+        return;
       }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+      let streamDone = false;
+      let accumulatedText = "";
+
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") {
+            streamDone = true;
+            break;
+          }
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              accumulatedText += content;
+              setGeneratedNotes(accumulatedText);
+            }
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Final flush
+      if (textBuffer.trim()) {
+        for (let raw of textBuffer.split("\n")) {
+          if (!raw) continue;
+          if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+          if (raw.startsWith(":") || raw.trim() === "") continue;
+          if (!raw.startsWith("data: ")) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              accumulatedText += content;
+              setGeneratedNotes(accumulatedText);
+            }
+          } catch {}
+        }
+      }
+
+      toast.success("Notes generated successfully!");
     } catch (error: any) {
       console.error("Error generating notes:", error);
-      if (error.message?.includes("429")) {
-        toast.error("Rate limit exceeded. Please try again later.");
-      } else if (error.message?.includes("402")) {
-        toast.error("Payment required. Please add funds to your workspace.");
-      } else {
-        toast.error("Failed to generate notes. Please try again.");
-      }
+      toast.error("Failed to generate notes. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -53,6 +122,57 @@ export const GeneratorForm = () => {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(generatedNotes);
     toast.success("Copied to clipboard!");
+  };
+
+  const formatNotesWithColors = (notes: string, isStreaming: boolean) => {
+    if (!notes) return "";
+    
+    let formatted = notes;
+    
+    // Format MCQ questions with green glow and questions in green
+    formatted = formatted.replace(
+      /^(#?\s*\d+[\.\)]?\s*)(.*?)(\n)/gm,
+      (match, num, question, newline) => 
+        `<div class="text-neon-green font-bold text-lg mb-2 ${isStreaming ? 'animate-pulse-glow' : ''}">${num}${question}</div>${newline}`
+    );
+    
+    // Format options (A, B, C, D) in white
+    formatted = formatted.replace(
+      /^\s*[-•]?\s*([A-D][\)\]])\s*(.+?)$/gm,
+      '<div class="ml-4 mb-1 text-white">$1 $2</div>'
+    );
+    
+    // Format Correct Answer in pink/accent color with glow
+    formatted = formatted.replace(
+      /(Correct Answer:\s*[A-D])/gi,
+      '<div class="text-accent font-bold text-base mt-2 mb-3">$1</div>'
+    );
+    
+    // Format Explanation in muted color
+    formatted = formatted.replace(
+      /(Explanation:.*?)(?=\n\n|\n#|\n\d+|$)/gs,
+      '<div class="text-muted-foreground text-sm mb-4">$1</div>'
+    );
+    
+    // Format main headings (# ) in large green
+    formatted = formatted.replace(
+      /^#\s+(.+?)$/gm,
+      '<h1 class="text-neon-green font-bold text-2xl mb-4 mt-6">$1</h1>'
+    );
+    
+    // Format subheadings (## ) in medium green
+    formatted = formatted.replace(
+      /^##\s+(.+?)$/gm,
+      '<h2 class="text-neon-green font-bold text-xl mb-3 mt-4">$2</h2>'
+    );
+    
+    // Format sub-subheadings (### ) in smaller green
+    formatted = formatted.replace(
+      /^###\s+(.+?)$/gm,
+      '<h3 class="text-neon-green font-semibold text-lg mb-2 mt-3">$1</h3>'
+    );
+    
+    return formatted;
   };
 
   const downloadPDF = () => {
@@ -64,20 +184,84 @@ export const GeneratorForm = () => {
       const maxWidth = pageWidth - 2 * margin;
       let yPosition = margin;
 
+      // Title
       pdf.setFontSize(16);
+      pdf.setFont("helvetica", "bold");
       pdf.text("AI Generated Notes", margin, yPosition);
-      yPosition += 10;
+      yPosition += 15;
 
-      pdf.setFontSize(10);
-      const lines = pdf.splitTextToSize(generatedNotes, maxWidth);
+      // Parse and format content
+      const lines = generatedNotes.split("\n");
       
       lines.forEach((line: string) => {
         if (yPosition > pageHeight - margin) {
           pdf.addPage();
           yPosition = margin;
         }
-        pdf.text(line, margin, yPosition);
-        yPosition += 7;
+
+        // Check for different formatting patterns
+        if (line.match(/^#?\s*\d+[\.\)]?\s*.+/)) {
+          // Question number (green in UI)
+          pdf.setFontSize(12);
+          pdf.setFont("helvetica", "bold");
+          pdf.setTextColor(0, 0, 0);
+          const wrappedLines = pdf.splitTextToSize(line, maxWidth);
+          wrappedLines.forEach((wLine: string) => {
+            pdf.text(wLine, margin, yPosition);
+            yPosition += 7;
+          });
+        } else if (line.match(/^\s*[-•]?\s*[A-D][\)\]]/)) {
+          // Options
+          pdf.setFontSize(10);
+          pdf.setFont("helvetica", "normal");
+          pdf.setTextColor(60, 60, 60);
+          const wrappedLines = pdf.splitTextToSize(line, maxWidth - 5);
+          wrappedLines.forEach((wLine: string) => {
+            pdf.text(wLine, margin + 5, yPosition);
+            yPosition += 6;
+          });
+        } else if (line.match(/Correct Answer:/i)) {
+          // Correct answer (pink in UI)
+          pdf.setFontSize(10);
+          pdf.setFont("helvetica", "bold");
+          pdf.setTextColor(0, 0, 0);
+          pdf.text(line, margin, yPosition);
+          yPosition += 8;
+        } else if (line.match(/Explanation:/i)) {
+          // Explanation
+          pdf.setFontSize(9);
+          pdf.setFont("helvetica", "italic");
+          pdf.setTextColor(100, 100, 100);
+          const wrappedLines = pdf.splitTextToSize(line, maxWidth);
+          wrappedLines.forEach((wLine: string) => {
+            pdf.text(wLine, margin, yPosition);
+            yPosition += 6;
+          });
+        } else if (line.match(/^#+\s+/)) {
+          // Headings
+          pdf.setFontSize(14);
+          pdf.setFont("helvetica", "bold");
+          pdf.setTextColor(0, 0, 0);
+          const cleanLine = line.replace(/^#+\s+/, "");
+          const wrappedLines = pdf.splitTextToSize(cleanLine, maxWidth);
+          wrappedLines.forEach((wLine: string) => {
+            pdf.text(wLine, margin, yPosition);
+            yPosition += 8;
+          });
+        } else if (line.trim()) {
+          // Regular text
+          pdf.setFontSize(10);
+          pdf.setFont("helvetica", "normal");
+          pdf.setTextColor(0, 0, 0);
+          const wrappedLines = pdf.splitTextToSize(line, maxWidth);
+          wrappedLines.forEach((wLine: string) => {
+            pdf.text(wLine, margin, yPosition);
+            yPosition += 6;
+          });
+        } else {
+          // Empty line spacing
+          yPosition += 4;
+        }
       });
 
       pdf.save("notes.pdf");
@@ -179,9 +363,12 @@ export const GeneratorForm = () => {
           </p>
           
           <div className="bg-black/40 p-6 rounded-lg border border-neon-purple/20">
-            <pre className="whitespace-pre-wrap text-white font-sans text-sm leading-relaxed [&>*:first-child]:text-neon-green [&>*:first-child]:text-xl [&>*:first-child]:font-bold [&_strong]:text-lg [&_strong]:text-white">
-              {generatedNotes}
-            </pre>
+            <div 
+              className="whitespace-pre-wrap text-white font-sans text-base leading-relaxed space-y-4"
+              dangerouslySetInnerHTML={{
+                __html: formatNotesWithColors(generatedNotes, isLoading)
+              }}
+            />
           </div>
         </Card>
       )}

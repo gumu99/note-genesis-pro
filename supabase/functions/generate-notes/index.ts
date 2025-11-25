@@ -173,6 +173,7 @@ Continue generating ALL possible MCQs until every concept is thoroughly covered.
           { role: "system", content: systemPrompt },
           { role: "user", content: text }
         ],
+        stream: true,
       }),
     });
 
@@ -194,15 +195,17 @@ Continue generating ALL possible MCQs until every concept is thoroughly covered.
       throw new Error(`AI gateway error: ${response.status}`);
     }
 
-    const data = await response.json();
-    const generatedNotes = data.choices[0].message.content;
+    console.log(`Starting streaming notes generation in ${mode} mode`);
 
-    console.log(`Successfully generated notes in ${mode} mode`);
-
-    return new Response(
-      JSON.stringify({ notes: generatedNotes }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    // Return the stream directly with proper headers
+    return new Response(response.body, {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+      },
+    });
   } catch (error) {
     console.error("Error in generate-notes function:", error);
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
