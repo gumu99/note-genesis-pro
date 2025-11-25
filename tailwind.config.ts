@@ -51,9 +51,15 @@ export default {
           start: "hsl(var(--gradient-start))",
           end: "hsl(var(--gradient-end))",
         },
+        neon: {
+          green: "hsl(var(--neon-green))",
+          purple: "hsl(var(--neon-purple))",
+          pink: "hsl(var(--neon-pink))",
+        },
       },
       backgroundImage: {
         "gradient-primary": "linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)))",
+        "gradient-input": "linear-gradient(90deg, #ff3cac, #784ba0, #2b86c5)",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -81,6 +87,8 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "button-press": "button-press 0.2s ease-out",
       },
     },
   },

@@ -40,15 +40,10 @@ All colors MUST be HSL.
 
     --gradient-start: 330 70% 60%;
     --gradient-end: 270 70% 60%;
+    
+    --neon-green: 140 100% 63%;
+    --neon-purple: 270 100% 70%;
+    --neon-pink: 330 100% 70%;
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-  }
-}
