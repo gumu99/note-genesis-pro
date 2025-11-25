@@ -45,5 +45,18 @@ All colors MUST be HSL.
     --neon-purple: 270 100% 70%;
     --neon-pink: 330 100% 70%;
   }
+
+  @keyframes text-glow {
+    0%, 100% {
+      text-shadow: 0 0 10px rgba(180, 0, 255, 0.8),
+                   0 0 20px rgba(180, 0, 255, 0.6),
+                   0 0 30px rgba(180, 0, 255, 0.4);
+    }
+    50% {
+      text-shadow: 0 0 15px rgba(180, 0, 255, 1),
+                   0 0 30px rgba(180, 0, 255, 0.8),
+                   0 0 45px rgba(180, 0, 255, 0.6);
+    }
+  }
 }
 
