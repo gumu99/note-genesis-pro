@@ -163,7 +163,7 @@ export const GeneratorForm = () => {
     // Format subheadings (## ) in medium green
     formatted = formatted.replace(
       /^##\s+(.+?)$/gm,
-      '<h2 class="text-neon-green font-bold text-xl mb-3 mt-4">$2</h2>'
+      '<h2 class="text-neon-green font-bold text-xl mb-3 mt-4">$1</h2>'
     );
     
     // Format sub-subheadings (### ) in smaller green
