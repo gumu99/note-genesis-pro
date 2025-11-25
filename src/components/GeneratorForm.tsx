@@ -128,6 +128,9 @@ export const GeneratorForm = () => {
     if (!notes) return "";
     
     let formatted = notes;
+    let mainCounter = 0;
+    const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x'];
+    let subCounters: { [key: number]: number } = {};
     
     // Format MCQ questions with green glow and questions in green
     formatted = formatted.replace(
@@ -154,22 +157,38 @@ export const GeneratorForm = () => {
       '<div class="text-muted-foreground text-sm mb-4">$1</div>'
     );
     
-    // Format main headings (# ) in large green
+    // Format main headings (# ) with numbers
     formatted = formatted.replace(
       /^#\s+(.+?)$/gm,
-      '<h1 class="text-neon-green font-bold text-2xl mb-4 mt-6">$1</h1>'
+      (match, heading) => {
+        mainCounter++;
+        subCounters[mainCounter] = 0;
+        return `<h1 class="text-neon-green font-bold text-2xl mb-4 mt-6">${mainCounter}. ${heading}</h1>`;
+      }
     );
     
-    // Format subheadings (## ) in medium green
+    // Format subheadings (## ) with roman numerals
     formatted = formatted.replace(
       /^##\s+(.+?)$/gm,
-      '<h2 class="text-neon-green font-bold text-xl mb-3 mt-4">$1</h2>'
+      (match, heading) => {
+        if (!subCounters[mainCounter]) subCounters[mainCounter] = 0;
+        const romanIndex = subCounters[mainCounter];
+        subCounters[mainCounter]++;
+        const roman = romanNumerals[romanIndex] || `(${romanIndex + 1})`;
+        return `<h2 class="text-neon-green font-bold text-xl mb-3 mt-4 ml-4">${roman}. ${heading}</h2>`;
+      }
     );
     
-    // Format sub-subheadings (### ) in smaller green
+    // Format sub-subheadings (### ) with bullet points
     formatted = formatted.replace(
       /^###\s+(.+?)$/gm,
-      '<h3 class="text-neon-green font-semibold text-lg mb-2 mt-3">$1</h3>'
+      '<h3 class="text-neon-green font-semibold text-lg mb-2 mt-3 ml-8">• $1</h3>'
+    );
+    
+    // Remove any remaining markdown symbols (####, #####, etc.)
+    formatted = formatted.replace(
+      /^#{4,}\s+(.+?)$/gm,
+      '<div class="text-neon-green font-medium text-base mb-2 mt-2 ml-12">- $1</div>'
     );
     
     return formatted;
