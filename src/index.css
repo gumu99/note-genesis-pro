@@ -17,33 +17,33 @@ All colors MUST be HSL.
     --popover: 0 0% 8%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 142 76% 36%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 142 95% 45%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 280 90% 65%;
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 60%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 330 70% 60%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 330 90% 65%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 15%;
+    --border: 0 0% 18%;
     --input: 0 0% 15%;
-    --ring: 142 76% 36%;
+    --ring: 142 95% 45%;
 
     --radius: 0.75rem;
 
-    --gradient-start: 330 70% 60%;
-    --gradient-end: 270 70% 60%;
+    --gradient-start: 330 90% 65%;
+    --gradient-end: 270 90% 70%;
     
-    --neon-green: 140 100% 63%;
-    --neon-purple: 270 100% 70%;
-    --neon-pink: 330 100% 70%;
+    --neon-green: 140 100% 55%;
+    --neon-purple: 270 100% 75%;
+    --neon-pink: 330 100% 75%;
   }
 
   @keyframes text-glow {
