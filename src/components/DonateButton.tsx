@@ -31,8 +31,8 @@ export const DonateButton = () => {
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <div className="bg-secondary p-6 rounded-lg text-center">
-            <p className="text-sm text-muted-foreground mb-2">UPI ID:</p>
+          <div className="bg-black p-6 rounded-lg text-center border border-primary/30">
+            <p className="text-sm text-primary font-semibold mb-2">UPI ID:</p>
             <p className="text-lg font-mono font-bold text-primary break-all">
               gumu642@okicici
             </p>
