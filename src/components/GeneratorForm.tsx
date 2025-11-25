@@ -364,7 +364,7 @@ export const GeneratorForm = () => {
           <Button
             onClick={() => generateNotes("normal")}
             disabled={isLoading}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200 hover:scale-105 hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(34,255,94,0.7)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_15px_rgba(34,255,94,0.5)]"
           >
             {isLoading && currentMode === "normal" ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -377,7 +377,7 @@ export const GeneratorForm = () => {
           <Button
             onClick={() => generateNotes("important")}
             disabled={isLoading}
-            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground transition-all duration-200 hover:scale-105 hover:shadow-[0_0_15px_rgba(236,72,153,0.4)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100"
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(255,72,200,0.7)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_15px_rgba(255,72,200,0.5)]"
           >
             {isLoading && currentMode === "important" ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -390,7 +390,7 @@ export const GeneratorForm = () => {
           <Button
             onClick={() => generateNotes("mcqs")}
             disabled={isLoading}
-            className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground transition-all duration-200 hover:scale-105 hover:shadow-[0_0_15px_rgba(100,100,100,0.4)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100"
+            className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(180,100,255,0.7)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_15px_rgba(180,100,255,0.5)]"
           >
             {isLoading && currentMode === "mcqs" ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
