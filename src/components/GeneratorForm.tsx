@@ -127,71 +127,67 @@ export const GeneratorForm = () => {
   const formatNotesWithColors = (notes: string, isStreaming: boolean) => {
     if (!notes) return "";
     
-    let formatted = notes;
+    const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x', 'xi', 'xii', 'xiii', 'xiv', 'xv'];
+    
+    // Split into lines and process with proper counters
+    const lines = notes.split('\n');
     let mainCounter = 0;
-    const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x'];
-    let subCounters: { [key: number]: number } = {};
+    let subCounter = 0;
     
-    // Format MCQ questions with green glow and questions in green
-    formatted = formatted.replace(
-      /^(#?\s*\d+[\.\)]?\s*)(.*?)(\n)/gm,
-      (match, num, question, newline) => 
-        `<div class="text-neon-green font-bold text-lg mb-2 ${isStreaming ? 'animate-pulse-glow' : ''}">${num}${question}</div>${newline}`
-    );
-    
-    // Format options (A, B, C, D) in white
-    formatted = formatted.replace(
-      /^\s*[-•]?\s*([A-D][\)\]])\s*(.+?)$/gm,
-      '<div class="ml-4 mb-1 text-white">$1 $2</div>'
-    );
-    
-    // Format Correct Answer in pink/accent color with glow
-    formatted = formatted.replace(
-      /(Correct Answer:\s*[A-D])/gi,
-      '<div class="text-accent font-bold text-base mt-2 mb-3">$1</div>'
-    );
-    
-    // Format Explanation in muted color
-    formatted = formatted.replace(
-      /(Explanation:.*?)(?=\n\n|\n#|\n\d+|$)/gs,
-      '<div class="text-muted-foreground text-sm mb-4">$1</div>'
-    );
-    
-    // Format main headings (# ) with numbers
-    formatted = formatted.replace(
-      /^#\s+(.+?)$/gm,
-      (match, heading) => {
+    const formattedLines = lines.map(line => {
+      // Main headings (# ) with numbers
+      if (line.match(/^#\s+(.+?)$/)) {
         mainCounter++;
-        subCounters[mainCounter] = 0;
+        subCounter = 0; // Reset sub-counter for each new main heading
+        const heading = line.replace(/^#\s+/, '');
         return `<h1 class="text-neon-green font-bold text-2xl mb-4 mt-6">${mainCounter}. ${heading}</h1>`;
       }
-    );
-    
-    // Format subheadings (## ) with roman numerals
-    formatted = formatted.replace(
-      /^##\s+(.+?)$/gm,
-      (match, heading) => {
-        if (!subCounters[mainCounter]) subCounters[mainCounter] = 0;
-        const romanIndex = subCounters[mainCounter];
-        subCounters[mainCounter]++;
-        const roman = romanNumerals[romanIndex] || `(${romanIndex + 1})`;
+      
+      // Subheadings (## ) with roman numerals
+      if (line.match(/^##\s+(.+?)$/)) {
+        const heading = line.replace(/^##\s+/, '');
+        const roman = romanNumerals[subCounter] || `(${subCounter + 1})`;
+        subCounter++;
         return `<h2 class="text-neon-green font-bold text-xl mb-3 mt-4 ml-4">${roman}. ${heading}</h2>`;
       }
-    );
+      
+      // Sub-subheadings (### ) with bullet points
+      if (line.match(/^###\s+(.+?)$/)) {
+        const heading = line.replace(/^###\s+/, '');
+        return `<h3 class="text-neon-green font-semibold text-lg mb-2 mt-3 ml-8">• ${heading}</h3>`;
+      }
+      
+      // Remove any remaining markdown symbols (####, #####, etc.)
+      if (line.match(/^#{4,}\s+(.+?)$/)) {
+        const heading = line.replace(/^#{4,}\s+/, '');
+        return `<div class="text-neon-green font-medium text-base mb-2 mt-2 ml-12">- ${heading}</div>`;
+      }
+      
+      // MCQ questions with green glow
+      if (line.match(/^(#?\s*\d+[\.\)]?\s*)/)) {
+        return `<div class="text-neon-green font-bold text-lg mb-2 ${isStreaming ? 'animate-pulse-glow' : ''}">${line}</div>`;
+      }
+      
+      // Options (A, B, C, D) in white
+      if (line.match(/^\s*[-•]?\s*([A-D][\)\]])\s*(.+?)$/)) {
+        return `<div class="ml-4 mb-1 text-white">${line.trim()}</div>`;
+      }
+      
+      // Correct Answer in pink/accent color
+      if (line.match(/Correct Answer:/i)) {
+        return `<div class="text-accent font-bold text-base mt-2 mb-3">${line}</div>`;
+      }
+      
+      // Explanation in muted color
+      if (line.match(/Explanation:/i)) {
+        return `<div class="text-muted-foreground text-sm mb-4">${line}</div>`;
+      }
+      
+      // Regular text
+      return line;
+    });
     
-    // Format sub-subheadings (### ) with bullet points
-    formatted = formatted.replace(
-      /^###\s+(.+?)$/gm,
-      '<h3 class="text-neon-green font-semibold text-lg mb-2 mt-3 ml-8">• $1</h3>'
-    );
-    
-    // Remove any remaining markdown symbols (####, #####, etc.)
-    formatted = formatted.replace(
-      /^#{4,}\s+(.+?)$/gm,
-      '<div class="text-neon-green font-medium text-base mb-2 mt-2 ml-12">- $1</div>'
-    );
-    
-    return formatted;
+    return formattedLines.join('\n');
   };
 
   const downloadPDF = () => {
