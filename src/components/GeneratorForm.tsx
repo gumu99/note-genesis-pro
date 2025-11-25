@@ -145,7 +145,7 @@ export const GeneratorForm = () => {
 
       {isLoading && (
         <div className="w-full bg-muted/50 rounded-full p-4 animate-pulse-glow">
-          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+          <div className="flex items-center justify-center gap-2 text-neon-purple">
             <Loader2 className="w-5 h-5 animate-spin" />
             <span className="font-medium">Generating...</span>
           </div>
