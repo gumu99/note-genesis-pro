@@ -1,11 +1,36 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Header } from "@/components/Header";
+import { GeneratorForm } from "@/components/GeneratorForm";
+import { DonateButton } from "@/components/DonateButton";
+import { AboutDialog } from "@/components/AboutDialog";
 
 const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-5xl">
+        <div className="flex justify-end gap-2 mb-4">
+          <DonateButton />
+          <AboutDialog />
+        </div>
+
+        <Header />
+
+        <p className="text-center text-muted-foreground mb-8">
+          Try my other creations here:{" "}
+          <a
+            href="https://whatsapp.com/channel/0029VakDfXs5rsQXYPzVDr1R"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline font-semibold"
+          >
+            WhatsApp Channel
+          </a>
+        </p>
+
+        <GeneratorForm />
+
+        <footer className="text-center mt-12 text-muted-foreground text-sm">
+          <p>Built with Lovable Cloud & Gemini 2.5-Flash</p>
+        </footer>
       </div>
     </div>
   );
