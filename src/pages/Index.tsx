@@ -27,10 +27,6 @@ const Index = () => {
         </p>
 
         <GeneratorForm />
-
-        <footer className="text-center mt-12 text-muted-foreground text-sm">
-          <p>Built with Lovable Cloud & Gemini 2.5-Flash</p>
-        </footer>
       </div>
     </div>
   );
