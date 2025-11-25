@@ -110,6 +110,16 @@ export default {
             boxShadow: "0 0 50px rgba(180, 0, 255, 1), 0 0 100px rgba(180, 0, 255, 0.6), inset 0 0 30px rgba(180, 0, 255, 0.4)",
           },
         },
+        "box-flash-purple": {
+          "0%, 100%": {
+            backgroundColor: "rgba(20, 20, 20, 0.8)",
+            boxShadow: "0 0 30px rgba(180, 0, 255, 0.6), 0 0 60px rgba(180, 0, 255, 0.4), inset 0 0 40px rgba(180, 0, 255, 0.3)",
+          },
+          "50%": {
+            backgroundColor: "rgba(90, 0, 150, 0.4)",
+            boxShadow: "0 0 50px rgba(180, 0, 255, 1), 0 0 100px rgba(180, 0, 255, 0.8), inset 0 0 60px rgba(180, 0, 255, 0.6)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -117,6 +127,7 @@ export default {
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "button-press": "button-press 0.2s ease-out",
         "border-glow": "border-glow 1.5s ease-in-out infinite",
+        "box-flash-purple": "box-flash-purple 1.5s ease-in-out infinite",
       },
     },
   },
