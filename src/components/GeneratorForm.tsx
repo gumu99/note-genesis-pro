@@ -412,7 +412,7 @@ export const GeneratorForm = () => {
       )}
 
       {generatedNotes && (
-        <Card className={`p-6 bg-[rgba(20,20,20,0.8)] border-neon-purple/30 animate-scale-in ${isLoading ? 'animate-border-glow' : 'shadow-[0_0_30px_rgba(180,0,255,0.6)]'}`}>
+        <Card className={`p-6 border-neon-purple/30 animate-scale-in ${isLoading ? 'animate-box-flash-purple' : 'bg-[rgba(20,20,20,0.8)] shadow-[0_0_30px_rgba(180,0,255,0.6)]'}`}>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 className="text-2xl sm:text-3xl font-bold text-white">Generated Explanation</h2>
             <div className="flex gap-2 flex-shrink-0">
