@@ -90,7 +90,7 @@ export const GeneratorForm = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Card className="p-6 bg-card border-border">
+      <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
         <label className="block text-foreground font-semibold mb-3">
           Enter text, notes, or concepts to explain:
         </label>
@@ -98,14 +98,14 @@ export const GeneratorForm = () => {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Paste your text, paragraphs, or concepts here..."
-          className="min-h-[200px] bg-gradient-primary border-none text-foreground placeholder:text-foreground/50 resize-none"
+          className="min-h-[200px] bg-gradient-input border-none text-white placeholder:text-white/60 resize-none rounded-2xl shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)] transition-all duration-200 focus:scale-[1.01] focus:shadow-[0_0_20px_rgba(255,0,255,0.4),inset_0_2px_10px_rgba(0,0,0,0.3)]"
         />
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <Button
             onClick={() => generateNotes("normal")}
             disabled={isLoading}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all hover:scale-105"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200 hover:scale-105 hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100"
           >
             {isLoading && currentMode === "normal" ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -118,7 +118,7 @@ export const GeneratorForm = () => {
           <Button
             onClick={() => generateNotes("important")}
             disabled={isLoading}
-            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground transition-all hover:scale-105"
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground transition-all duration-200 hover:scale-105 hover:shadow-[0_0_15px_rgba(236,72,153,0.4)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100"
           >
             {isLoading && currentMode === "important" ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -131,7 +131,7 @@ export const GeneratorForm = () => {
           <Button
             onClick={() => generateNotes("mcqs")}
             disabled={isLoading}
-            className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground transition-all hover:scale-105"
+            className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground transition-all duration-200 hover:scale-105 hover:shadow-[0_0_15px_rgba(100,100,100,0.4)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100"
           >
             {isLoading && currentMode === "mcqs" ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -143,22 +143,30 @@ export const GeneratorForm = () => {
         </div>
       </Card>
 
+      {isLoading && (
+        <div className="w-full bg-muted/50 rounded-full p-4 animate-pulse-glow">
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span className="font-medium">Generating...</span>
+          </div>
+        </div>
+      )}
+
       {generatedNotes && (
-        <Card className="p-6 bg-card border-border animate-scale-in">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-foreground">Generated Explanation</h2>
+        <Card className="p-6 bg-[rgba(20,20,20,0.8)] border-neon-purple/30 shadow-[0_0_30px_rgba(180,0,255,0.6)] animate-scale-in">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold text-white">Generated Explanation</h2>
             <div className="flex gap-2">
               <Button
                 onClick={copyToClipboard}
                 variant="outline"
-                className="hover:scale-105 transition-transform"
+                className="bg-white text-black border-white hover:bg-white/90 hover:scale-105 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] transition-all duration-200 active:animate-button-press"
               >
                 Copy
               </Button>
               <Button
                 onClick={downloadPDF}
-                variant="outline"
-                className="hover:scale-105 transition-transform"
+                className="bg-black text-white border-2 border-white hover:bg-black/90 hover:scale-105 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] transition-all duration-200 active:animate-button-press"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download PDF
@@ -166,15 +174,15 @@ export const GeneratorForm = () => {
             </div>
           </div>
           
-          <div className="bg-secondary p-6 rounded-lg">
-            <pre className="whitespace-pre-wrap text-foreground font-sans text-sm leading-relaxed">
+          <p className="text-sm text-yellow-400 mb-4 flex items-center gap-2">
+            ⚠️ PDF download works on PC only — may not work on mobile devices.
+          </p>
+          
+          <div className="bg-black/40 p-6 rounded-lg border border-neon-purple/20">
+            <pre className="whitespace-pre-wrap text-white font-sans text-sm leading-relaxed [&>*:first-child]:text-neon-green [&>*:first-child]:text-xl [&>*:first-child]:font-bold [&_strong]:text-lg [&_strong]:text-white">
               {generatedNotes}
             </pre>
           </div>
-          
-          <p className="text-sm text-muted-foreground mt-4 text-center">
-            ⚠️ PDF Download works on PC only — may not work on mobile devices.
-          </p>
         </Card>
       )}
     </div>
