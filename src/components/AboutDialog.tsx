@@ -13,7 +13,7 @@ export const AboutDialog = () => {
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="hover:scale-105 transition-transform"
+          className="border-primary/50 text-foreground hover:bg-primary/10 hover:border-primary hover:scale-105 transition-all shadow-[0_0_10px_rgba(34,255,94,0.3)]"
         >
           <Info className="w-4 h-4 mr-2" />
           About

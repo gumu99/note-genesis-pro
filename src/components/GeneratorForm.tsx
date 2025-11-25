@@ -390,7 +390,7 @@ export const GeneratorForm = () => {
           <Button
             onClick={() => generateNotes("mcqs")}
             disabled={isLoading}
-            className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(180,100,255,0.7)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_15px_rgba(180,100,255,0.5)]"
+            className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(100,150,255,0.7)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_15px_rgba(100,150,255,0.5)]"
           >
             {isLoading && currentMode === "mcqs" ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
