@@ -17,7 +17,7 @@ const Index = () => {
         <p className="text-center text-muted-foreground mb-8">
           Try my other creations here:{" "}
           <a
-            href="https://whatsapp.com/channel/0029VakDfXs5rsQXYPzVDr1R"
+            href="https://whatsapp.com/channel/0029VbBa1Es2ER6mgaO0Am2V"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:underline font-semibold"
