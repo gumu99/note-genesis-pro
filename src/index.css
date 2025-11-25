@@ -58,5 +58,18 @@ All colors MUST be HSL.
                    0 0 45px rgba(180, 0, 255, 0.6);
     }
   }
+
+  @keyframes border-glow {
+    0%, 100% {
+      box-shadow: 0 0 30px rgba(180, 0, 255, 0.6),
+                  0 0 60px rgba(180, 0, 255, 0.4),
+                  inset 0 0 20px rgba(180, 0, 255, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 50px rgba(180, 0, 255, 1),
+                  0 0 100px rgba(180, 0, 255, 0.6),
+                  inset 0 0 30px rgba(180, 0, 255, 0.4);
+    }
+  }
 }
 

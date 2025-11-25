@@ -178,97 +178,157 @@ export const GeneratorForm = () => {
   const downloadPDF = () => {
     try {
       const pdf = new jsPDF();
+      
+      // Set black background for entire page
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
+      pdf.setFillColor(0, 0, 0);
+      pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+      
       const margin = 15;
       const maxWidth = pageWidth - 2 * margin;
       let yPosition = margin;
 
-      // Title
-      pdf.setFontSize(16);
-      pdf.setFont("helvetica", "bold");
-      pdf.text("AI Generated Notes", margin, yPosition);
-      yPosition += 15;
+      // Helper function to add new page with black background
+      const addBlackPage = () => {
+        pdf.addPage();
+        pdf.setFillColor(0, 0, 0);
+        pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+        yPosition = margin;
+      };
 
-      // Parse and format content
+      // Parse and format content with colors
       const lines = generatedNotes.split("\n");
       
       lines.forEach((line: string) => {
         if (yPosition > pageHeight - margin) {
-          pdf.addPage();
-          yPosition = margin;
+          addBlackPage();
         }
 
-        // Check for different formatting patterns
-        if (line.match(/^#?\s*\d+[\.\)]?\s*.+/)) {
-          // Question number (green in UI)
-          pdf.setFontSize(12);
-          pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(0, 0, 0);
-          const wrappedLines = pdf.splitTextToSize(line, maxWidth);
-          wrappedLines.forEach((wLine: string) => {
-            pdf.text(wLine, margin, yPosition);
-            yPosition += 7;
-          });
-        } else if (line.match(/^\s*[-•]?\s*[A-D][\)\]]/)) {
-          // Options
-          pdf.setFontSize(10);
-          pdf.setFont("helvetica", "normal");
-          pdf.setTextColor(60, 60, 60);
-          const wrappedLines = pdf.splitTextToSize(line, maxWidth - 5);
-          wrappedLines.forEach((wLine: string) => {
-            pdf.text(wLine, margin + 5, yPosition);
-            yPosition += 6;
-          });
-        } else if (line.match(/Correct Answer:/i)) {
-          // Correct answer (pink in UI)
-          pdf.setFontSize(10);
-          pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(0, 0, 0);
-          pdf.text(line, margin, yPosition);
-          yPosition += 8;
-        } else if (line.match(/Explanation:/i)) {
-          // Explanation
-          pdf.setFontSize(9);
-          pdf.setFont("helvetica", "italic");
-          pdf.setTextColor(100, 100, 100);
-          const wrappedLines = pdf.splitTextToSize(line, maxWidth);
-          wrappedLines.forEach((wLine: string) => {
-            pdf.text(wLine, margin, yPosition);
-            yPosition += 6;
-          });
-        } else if (line.match(/^#+\s+/)) {
-          // Headings
+        // Questions in GREEN (matching the reference)
+        if (line.match(/^Q:\s*.+/) || line.match(/^#?\s*\d+[\.\)]\s*.+/)) {
           pdf.setFontSize(14);
           pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(0, 0, 0);
-          const cleanLine = line.replace(/^#+\s+/, "");
-          const wrappedLines = pdf.splitTextToSize(cleanLine, maxWidth);
+          pdf.setTextColor(0, 255, 100); // Bright green
+          const wrappedLines = pdf.splitTextToSize(line, maxWidth);
           wrappedLines.forEach((wLine: string) => {
+            if (yPosition > pageHeight - margin) addBlackPage();
             pdf.text(wLine, margin, yPosition);
             yPosition += 8;
           });
-        } else if (line.trim()) {
-          // Regular text
-          pdf.setFontSize(10);
-          pdf.setFont("helvetica", "normal");
-          pdf.setTextColor(0, 0, 0);
+          yPosition += 3;
+        } 
+        // Main headings in PINK (1. Definition / Core Idea)
+        else if (line.match(/^\d+\.\s*[A-Z]/)) {
+          pdf.setFontSize(13);
+          pdf.setFont("helvetica", "bold");
+          pdf.setTextColor(255, 80, 180); // Bright pink
           const wrappedLines = pdf.splitTextToSize(line, maxWidth);
           wrappedLines.forEach((wLine: string) => {
+            if (yPosition > pageHeight - margin) addBlackPage();
+            pdf.text(wLine, margin, yPosition);
+            yPosition += 7;
+          });
+          yPosition += 2;
+        }
+        // Subheadings with markdown (##, ###)
+        else if (line.match(/^#+\s+/)) {
+          const level = (line.match(/^#+/) || [""])[0].length;
+          pdf.setFontSize(level === 1 ? 14 : level === 2 ? 12 : 11);
+          pdf.setFont("helvetica", "bold");
+          pdf.setTextColor(255, 80, 180); // Pink
+          const cleanLine = line.replace(/^#+\s+/, "");
+          const wrappedLines = pdf.splitTextToSize(cleanLine, maxWidth);
+          wrappedLines.forEach((wLine: string) => {
+            if (yPosition > pageHeight - margin) addBlackPage();
+            pdf.text(wLine, margin, yPosition);
+            yPosition += 7;
+          });
+          yPosition += 2;
+        }
+        // Bullet points with bold terms
+        else if (line.match(/^\s*[•\-\*]\s*\*\*.+?\*\*:/)) {
+          pdf.setFontSize(10);
+          pdf.setFont("helvetica", "bold");
+          pdf.setTextColor(255, 80, 180); // Pink for bold terms
+          const boldPart = (line.match(/\*\*(.+?)\*\*:/) || ["", ""])[1];
+          const restPart = line.split("**:")[1] || "";
+          
+          if (yPosition > pageHeight - margin) addBlackPage();
+          pdf.text(`• ${boldPart}:`, margin, yPosition);
+          
+          // Rest in lighter pink
+          pdf.setFont("helvetica", "normal");
+          pdf.setTextColor(255, 120, 200);
+          const wrappedRest = pdf.splitTextToSize(restPart.trim(), maxWidth - 10);
+          wrappedRest.forEach((wLine: string, idx: number) => {
+            if (idx === 0) {
+              pdf.text(wLine, margin + 35, yPosition);
+            } else {
+              yPosition += 5;
+              if (yPosition > pageHeight - margin) addBlackPage();
+              pdf.text(wLine, margin + 5, yPosition);
+            }
+          });
+          yPosition += 6;
+        }
+        // Options (A, B, C, D)
+        else if (line.match(/^\s*[-•]?\s*[A-D][\)\]]/)) {
+          pdf.setFontSize(10);
+          pdf.setFont("helvetica", "normal");
+          pdf.setTextColor(255, 120, 200); // Light pink
+          const wrappedLines = pdf.splitTextToSize(line.trim(), maxWidth - 5);
+          wrappedLines.forEach((wLine: string) => {
+            if (yPosition > pageHeight - margin) addBlackPage();
+            pdf.text(wLine, margin + 5, yPosition);
+            yPosition += 6;
+          });
+        }
+        // Correct Answer
+        else if (line.match(/Correct Answer:/i)) {
+          pdf.setFontSize(11);
+          pdf.setFont("helvetica", "bold");
+          pdf.setTextColor(255, 80, 180); // Pink
+          if (yPosition > pageHeight - margin) addBlackPage();
+          pdf.text(line.trim(), margin, yPosition);
+          yPosition += 8;
+        }
+        // Explanation
+        else if (line.match(/Explanation:/i)) {
+          pdf.setFontSize(9);
+          pdf.setFont("helvetica", "italic");
+          pdf.setTextColor(200, 150, 200); // Lighter pink
+          const wrappedLines = pdf.splitTextToSize(line, maxWidth);
+          wrappedLines.forEach((wLine: string) => {
+            if (yPosition > pageHeight - margin) addBlackPage();
             pdf.text(wLine, margin, yPosition);
             yPosition += 6;
           });
-        } else {
-          // Empty line spacing
+          yPosition += 2;
+        }
+        // Regular paragraph text
+        else if (line.trim()) {
+          pdf.setFontSize(10);
+          pdf.setFont("helvetica", "normal");
+          pdf.setTextColor(255, 120, 200); // Light pink for regular text
+          const wrappedLines = pdf.splitTextToSize(line, maxWidth);
+          wrappedLines.forEach((wLine: string) => {
+            if (yPosition > pageHeight - margin) addBlackPage();
+            pdf.text(wLine, margin, yPosition);
+            yPosition += 6;
+          });
+        }
+        // Empty line
+        else {
           yPosition += 4;
         }
       });
 
       pdf.save("notes.pdf");
-      toast.success("PDF downloaded! Note: PDF works best on PC");
+      toast.success("Professional PDF downloaded successfully!");
     } catch (error) {
       console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF. Try on PC for best results.");
+      toast.error("Failed to generate PDF. Please try again.");
     }
   };
 
@@ -337,7 +397,7 @@ export const GeneratorForm = () => {
       )}
 
       {generatedNotes && (
-        <Card className="p-6 bg-[rgba(20,20,20,0.8)] border-neon-purple/30 shadow-[0_0_30px_rgba(180,0,255,0.6)] animate-scale-in">
+        <Card className={`p-6 bg-[rgba(20,20,20,0.8)] border-neon-purple/30 animate-scale-in ${isLoading ? 'animate-border-glow' : 'shadow-[0_0_30px_rgba(180,0,255,0.6)]'}`}>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 className="text-2xl sm:text-3xl font-bold text-white">Generated Explanation</h2>
             <div className="flex gap-2 flex-shrink-0">
