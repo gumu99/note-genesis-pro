@@ -86,5 +86,26 @@ All colors MUST be HSL.
                   inset 0 0 60px rgba(180, 0, 255, 0.6);
     }
   }
+
+  @keyframes generating-pulse {
+    0%, 100% {
+      opacity: 1;
+      text-shadow: 0 0 10px rgba(180, 0, 255, 0.8),
+                   0 0 20px rgba(180, 0, 255, 0.6),
+                   0 0 30px rgba(180, 0, 255, 0.4),
+                   0 0 40px rgba(180, 0, 255, 0.3);
+    }
+    50% {
+      opacity: 0.6;
+      text-shadow: 0 0 20px rgba(180, 0, 255, 1),
+                   0 0 40px rgba(180, 0, 255, 0.8),
+                   0 0 60px rgba(180, 0, 255, 0.6),
+                   0 0 80px rgba(180, 0, 255, 0.4);
+    }
+  }
+
+  .animate-generating-pulse {
+    animation: generating-pulse 1.5s ease-in-out infinite;
+  }
 }
 
