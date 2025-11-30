@@ -163,18 +163,39 @@ MCQ RULES:
 - All output must be PDF-compatible
 - Process the COMPLETE input without skipping any concepts`;
     } else if (mode === "summarise") {
-      systemPrompt = `You are a professional academic summarizer. Create a SHORT, SIMPLE, CLEAR summary that covers EVERY topic from the input.
+      systemPrompt = `You are a professional academic summarizer. Create a SHORT, SIMPLE, CLEAR summary that maintains EXACT 1:1 ratio with input items.
 
-CRITICAL RULES FOR SUMMARISE MODE:
-- You MUST summarise EVERY topic from the original notes
-- Do NOT skip any topic or section
-- Do NOT remove any concepts
-- Keep ALL topics but shorten the explanations
-- Each topic from the input MUST appear in the summary
-- Only reduce the LENGTH of explanations, NOT the number of topics
-- Do NOT add new information
-- The summary must be short and simple but MUST cover ALL concepts
-- EACH TOPIC EXPLANATION MUST BE EXACTLY 2-3 LINES ONLY
+CRITICAL 1:1 RATIO ENFORCEMENT (MOST IMPORTANT):
+- FIRST: Count the EXACT number of items/topics/questions in the input
+- OUTPUT must have the EXACT SAME NUMBER of items as input - NO MORE, NO LESS
+- If input has 10 items → output MUST have exactly 10 items
+- If input has 232 items → output MUST have exactly 232 items
+- If input has 50 questions → output MUST have exactly 50 summaries
+
+STRICT ANTI-SPLITTING RULES:
+- Do NOT split one input item into multiple output items
+- Do NOT break down topics into sub-sections or sub-points
+- Do NOT expand one question into multiple answers
+- Each input item = EXACTLY ONE output item
+
+STRICT ANTI-COMBINING RULES:
+- Do NOT combine multiple input items into one
+- Do NOT merge related topics together
+- Keep each item separate and distinct
+
+NUMBER PRESERVATION:
+- If input items are numbered (1, 2, 3...), preserve the SAME numbering
+- Match the input format and structure exactly
+- Maintain the EXACT order of items from input
+
+SUMMARY CONTENT RULES:
+- EACH item explanation MUST be EXACTLY 2-3 LINES ONLY - no more, no less
+- Use SIMPLE, BASIC language - no complex words
+- Make it CLEAR - easy to understand at first read
+- Use student-friendly language
+- Direct, simple explanations only
+- Perfect for quick revision before exams
+- NO bullet points needed - just 2-3 line paragraph per item
 
 GENERAL RULES:
 - Output must be clean, structured, and ready for PDF export.
@@ -185,34 +206,30 @@ STRICT FORMATTING RULES (PDF-FRIENDLY):
 - Use ONLY these markdown symbols:
   * # for title (H1)
   * ## for sections (H2)
-  * - (dash) for bullet points ONLY
+  * - (dash) for bullet points ONLY (if needed)
 - NO stars (*), NO hashtags in text, NO Unicode bullets, NO emojis, NO icons
 - NO special symbols, NO decoration
 
-CONTENT STRUCTURE:
+OUTPUT FORMAT:
 # Summary
 
-## [Topic 1 from input]
+## 1. [First item/topic/question from input - keep original title]
 
-2-3 line explanation covering the core concept in simple student language.
+2-3 line summary of this item only in simple student language.
 
-## [Topic 2 from input]
+## 2. [Second item/topic/question from input - keep original title]
 
-2-3 line explanation covering the core concept in simple student language.
+2-3 line summary of this item only in simple student language.
 
-## [Topic 3 from input]
+## 3. [Third item from input]
 
-Continue for EVERY topic with 2-3 lines each...
+Continue for EVERY item with 2-3 lines each...
 
-SUMMARY RULES:
-- EACH topic explanation MUST be EXACTLY 2-3 lines - no more, no less
-- Use SIMPLE, BASIC language - no complex words
-- Make it CLEAR - easy to understand at first read
-- Use student-friendly language
-- Direct, simple explanations only
-- Perfect for quick revision before exams
-- EVERY topic from input MUST be included in summary
-- NO bullet points needed - just 2-3 line paragraph per topic`;
+(Continue numbering to match EXACT count from input)
+
+FINAL CHECK:
+- Before outputting, verify: Does my output count MATCH my input count EXACTLY?
+- If input = 10, output must = 10. If input = 232, output must = 232.`;
     }
 
     console.log(`Generating notes in ${mode} mode`);
