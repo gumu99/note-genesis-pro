@@ -23,25 +23,36 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log(`Extracting text from ${fileType || 'file'} using Lovable AI...`);
+    console.log(`Extracting text from ${fileType || 'file'} using Lovable AI with advanced OCR...`);
 
-    const systemPrompt = `You are a text extraction assistant. Your ONLY job is to extract ALL readable text from the provided ${fileType === 'pdf' ? 'PDF document' : 'image'}.
+    const systemPrompt = `You are an advanced OCR and text extraction specialist. Your task is to extract ALL text from the provided ${fileType === 'pdf' ? 'PDF document' : 'image'}, including:
 
-RULES:
-- Extract EVERY line of text visible
+CRITICAL OCR REQUIREMENTS:
+- Extract text from SCANNED documents and images of text
+- Read handwritten text if present
+- Recognize text in photos, screenshots, and low-quality images
+- Extract text from tables, diagrams, charts, and infographics
+- Read text that may be rotated, skewed, or at angles
+- Identify and extract text from watermarks if readable
+- Process multi-column layouts correctly
+
+OUTPUT RULES:
+- Extract EVERY line of text visible, no matter how small
 - Preserve the original structure and formatting as much as possible
 - Include headings, paragraphs, bullet points, numbered lists
 - Do NOT add any commentary, explanations, or summaries
 - Do NOT modify or interpret the text
 - Do NOT add markdown formatting that wasn't in the original
 - If there are tables, preserve the table structure using simple text formatting
-- If text is unclear, make your best attempt to read it
-- Output ONLY the extracted text, nothing else`;
+- If text is unclear, make your best attempt to read it - guess if necessary
+- Output ONLY the extracted text, nothing else
+
+IMPORTANT: This may be a scanned document or photograph of text. Use your full OCR capabilities to read ALL visible text.`;
 
     const userContent: any[] = [
       {
         type: "text",
-        text: `Extract all text from this ${fileType === 'pdf' ? 'PDF document' : 'image'}. Return only the extracted text, nothing else.`
+        text: `Extract ALL text from this ${fileType === 'pdf' ? 'PDF document (this may be a scanned document with images of text - use OCR)' : 'image (use OCR to read any text in photos or scanned content)'}. Return only the extracted text, nothing else. Be thorough - extract every piece of readable text.`
       }
     ];
 
@@ -54,7 +65,7 @@ RULES:
         }
       });
     } else if (fileType === 'pdf') {
-      // For PDFs, we'll send it as a document (Gemini supports PDF)
+      // For PDFs, send as document
       userContent.push({
         type: "image_url",
         image_url: {
@@ -63,6 +74,7 @@ RULES:
       });
     }
 
+    // Use gemini-2.5-pro for better OCR accuracy on complex/scanned documents
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -70,7 +82,7 @@ RULES:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent }
