@@ -1,22 +1,176 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { FileText, Lightbulb, HelpCircle, Download, Loader2, BookOpen } from "lucide-react";
+import { FileText, Lightbulb, HelpCircle, Download, Loader2, BookOpen, Upload, X, FileImage, File } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
+import * as pdfjsLib from "pdfjs-dist";
+
+// Set up PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 type Mode = "normal" | "important" | "mcqs" | "summarise";
+
+interface UploadedFile {
+  file: File;
+  name: string;
+  type: "pdf" | "image";
+  extractedText?: string;
+  isExtracting?: boolean;
+}
 
 export const GeneratorForm = () => {
   const [text, setText] = useState("");
   const [generatedNotes, setGeneratedNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [currentMode, setCurrentMode] = useState<Mode | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = "";
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(" ");
+        fullText += pageText + "\n\n";
+      }
+
+      return fullText.trim();
+    } catch (error) {
+      console.error("Error extracting PDF text:", error);
+      throw new Error("Failed to extract text from PDF");
+    }
+  };
+
+  const extractTextFromImage = async (file: File): Promise<string> => {
+    try {
+      // Convert file to base64
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer).reduce(
+          (data, byte) => data + String.fromCharCode(byte),
+          ""
+        )
+      );
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-text-from-image`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            imageBase64: base64,
+            mimeType: file.type,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Rate limit exceeded. Please try again later.");
+        } else if (response.status === 402) {
+          throw new Error("Payment required. Please add funds to your workspace.");
+        }
+        throw new Error("Failed to extract text from image");
+      }
+
+      const data = await response.json();
+      return data.text || "";
+    } catch (error) {
+      console.error("Error extracting image text:", error);
+      throw error;
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    for (const file of Array.from(files)) {
+      const isPDF = file.type === "application/pdf";
+      const isImage = file.type.startsWith("image/");
+
+      if (!isPDF && !isImage) {
+        toast.error(`Unsupported file type: ${file.name}`);
+        continue;
+      }
+
+      const newFile: UploadedFile = {
+        file,
+        name: file.name,
+        type: isPDF ? "pdf" : "image",
+        isExtracting: true,
+      };
+
+      setUploadedFiles((prev) => [...prev, newFile]);
+
+      try {
+        let extractedText = "";
+        if (isPDF) {
+          extractedText = await extractTextFromPDF(file);
+        } else {
+          extractedText = await extractTextFromImage(file);
+        }
+
+        setUploadedFiles((prev) =>
+          prev.map((f) =>
+            f.file === file
+              ? { ...f, extractedText, isExtracting: false }
+              : f
+          )
+        );
+
+        toast.success(`Text extracted from ${file.name}`);
+      } catch (error: any) {
+        setUploadedFiles((prev) =>
+          prev.map((f) =>
+            f.file === file
+              ? { ...f, isExtracting: false, extractedText: "" }
+              : f
+          )
+        );
+        toast.error(error.message || `Failed to extract text from ${file.name}`);
+      }
+    }
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeFile = (fileToRemove: UploadedFile) => {
+    setUploadedFiles((prev) => prev.filter((f) => f.file !== fileToRemove.file));
+  };
+
+  const getCombinedText = (): string => {
+    const fileTexts = uploadedFiles
+      .filter((f) => f.extractedText)
+      .map((f) => f.extractedText)
+      .join("\n\n");
+
+    if (text.trim() && fileTexts) {
+      return `${text}\n\n${fileTexts}`;
+    }
+    return text.trim() || fileTexts;
+  };
 
   const generateNotes = async (mode: Mode) => {
-    if (!text.trim()) {
-      toast.error("Please enter some text to generate notes");
+    const combinedText = getCombinedText();
+    
+    if (!combinedText) {
+      toast.error("Please enter some text or upload a file to generate notes");
       return;
     }
 
@@ -33,7 +187,7 @@ export const GeneratorForm = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ text, mode }),
+          body: JSON.stringify({ text: combinedText, mode }),
         }
       );
 
@@ -129,21 +283,18 @@ export const GeneratorForm = () => {
     
     const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x', 'xi', 'xii', 'xiii', 'xiv', 'xv'];
     
-    // Split into lines and process with proper counters
     const lines = notes.split('\n');
     let mainCounter = 0;
     let subCounter = 0;
     
     const formattedLines = lines.map(line => {
-      // Main headings (# ) with numbers
       if (line.match(/^#\s+(.+?)$/)) {
         mainCounter++;
-        subCounter = 0; // Reset sub-counter for each new main heading
+        subCounter = 0;
         const heading = line.replace(/^#\s+/, '');
         return `<h1 class="text-neon-green font-bold text-2xl mb-4 mt-6">${mainCounter}. ${heading}</h1>`;
       }
       
-      // Subheadings (## ) with roman numerals
       if (line.match(/^##\s+(.+?)$/)) {
         const heading = line.replace(/^##\s+/, '');
         const roman = romanNumerals[subCounter] || `(${subCounter + 1})`;
@@ -151,45 +302,37 @@ export const GeneratorForm = () => {
         return `<h2 class="text-neon-green font-bold text-xl mb-3 mt-4 ml-4">${roman}. ${heading}</h2>`;
       }
       
-      // Sub-subheadings (### ) with bullet points
       if (line.match(/^###\s+(.+?)$/)) {
         const heading = line.replace(/^###\s+/, '');
         return `<h3 class="text-neon-green font-semibold text-lg mb-2 mt-3 ml-8">- ${heading}</h3>`;
       }
       
-      // Remove any remaining markdown symbols (####, #####, etc.)
       if (line.match(/^#{4,}\s+(.+?)$/)) {
         const heading = line.replace(/^#{4,}\s+/, '');
         return `<div class="text-neon-green font-medium text-base mb-2 mt-2 ml-12">- ${heading}</div>`;
       }
       
-      // Bullet points with dash
       if (line.match(/^\s*-\s+(.+?)$/)) {
         const content = line.replace(/^\s*-\s+/, '');
         return `<div class="ml-8 mb-1 text-white">- ${content}</div>`;
       }
       
-      // MCQ questions with green glow
       if (line.match(/^(#?\s*\d+[\.\)]?\s*)/)) {
         return `<div class="text-neon-green font-bold text-lg mb-2 ${isStreaming ? 'animate-pulse-glow' : ''}">${line}</div>`;
       }
       
-      // Options (A, B, C, D) in white
       if (line.match(/^\s*[-•]?\s*([A-D][\)\]])\s*(.+?)$/)) {
         return `<div class="ml-4 mb-1 text-white">${line.trim()}</div>`;
       }
       
-      // Correct Answer in pink/accent color
       if (line.match(/Correct Answer:/i)) {
         return `<div class="text-accent font-bold text-base mt-2 mb-3">${line}</div>`;
       }
       
-      // Explanation in muted color
       if (line.match(/Explanation:/i)) {
         return `<div class="text-muted-foreground text-sm mb-4">${line}</div>`;
       }
       
-      // Regular text
       return line;
     });
     
@@ -200,7 +343,6 @@ export const GeneratorForm = () => {
     try {
       const pdf = new jsPDF();
       
-      // Set black background for entire page
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       pdf.setFillColor(0, 0, 0);
@@ -210,7 +352,6 @@ export const GeneratorForm = () => {
       const maxWidth = pageWidth - 2 * margin;
       let yPosition = margin;
 
-      // Helper function to add new page with black background
       const addBlackPage = () => {
         pdf.addPage();
         pdf.setFillColor(0, 0, 0);
@@ -218,7 +359,6 @@ export const GeneratorForm = () => {
         yPosition = margin;
       };
 
-      // Parse and format content with colors
       const lines = generatedNotes.split("\n");
       
       lines.forEach((line: string) => {
@@ -226,11 +366,10 @@ export const GeneratorForm = () => {
           addBlackPage();
         }
 
-        // Questions in GREEN (matching the reference)
         if (line.match(/^Q:\s*.+/) || line.match(/^#?\s*\d+[\.\)]\s*.+/)) {
           pdf.setFontSize(14);
           pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(0, 255, 100); // Bright green
+          pdf.setTextColor(0, 255, 100);
           const wrappedLines = pdf.splitTextToSize(line, maxWidth);
           wrappedLines.forEach((wLine: string) => {
             if (yPosition > pageHeight - margin) addBlackPage();
@@ -239,11 +378,10 @@ export const GeneratorForm = () => {
           });
           yPosition += 3;
         } 
-        // Main headings (# ) in PINK
         else if (line.match(/^#\s+/)) {
           pdf.setFontSize(16);
           pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(255, 80, 180); // Bright pink
+          pdf.setTextColor(255, 80, 180);
           const cleanLine = line.replace(/^#\s+/, "");
           const wrappedLines = pdf.splitTextToSize(cleanLine, maxWidth);
           wrappedLines.forEach((wLine: string) => {
@@ -253,11 +391,10 @@ export const GeneratorForm = () => {
           });
           yPosition += 3;
         }
-        // Subheadings (## ) in PINK
         else if (line.match(/^##\s+/)) {
           pdf.setFontSize(13);
           pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(255, 80, 180); // Pink
+          pdf.setTextColor(255, 80, 180);
           const cleanLine = line.replace(/^##\s+/, "");
           const wrappedLines = pdf.splitTextToSize(cleanLine, maxWidth);
           wrappedLines.forEach((wLine: string) => {
@@ -267,11 +404,10 @@ export const GeneratorForm = () => {
           });
           yPosition += 2;
         }
-        // Sub-subheadings (### ) in lighter pink
         else if (line.match(/^###\s+/)) {
           pdf.setFontSize(11);
           pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(255, 120, 200); // Lighter pink
+          pdf.setTextColor(255, 120, 200);
           const cleanLine = line.replace(/^###\s+/, "");
           const wrappedLines = pdf.splitTextToSize("- " + cleanLine, maxWidth - 10);
           wrappedLines.forEach((wLine: string) => {
@@ -281,11 +417,10 @@ export const GeneratorForm = () => {
           });
           yPosition += 2;
         }
-        // Bullet points with dash
         else if (line.match(/^\s*-\s+/)) {
           pdf.setFontSize(10);
           pdf.setFont("helvetica", "normal");
-          pdf.setTextColor(255, 120, 200); // Light pink
+          pdf.setTextColor(255, 120, 200);
           const cleanLine = line.replace(/^\s*-\s+/, "");
           const wrappedLines = pdf.splitTextToSize("- " + cleanLine, maxWidth - 15);
           wrappedLines.forEach((wLine: string) => {
@@ -294,11 +429,10 @@ export const GeneratorForm = () => {
             yPosition += 6;
           });
         }
-        // Options (A, B, C, D)
         else if (line.match(/^\s*[-•]?\s*[A-D][\)\]]/)) {
           pdf.setFontSize(10);
           pdf.setFont("helvetica", "normal");
-          pdf.setTextColor(255, 120, 200); // Light pink
+          pdf.setTextColor(255, 120, 200);
           const wrappedLines = pdf.splitTextToSize(line.trim(), maxWidth - 5);
           wrappedLines.forEach((wLine: string) => {
             if (yPosition > pageHeight - margin) addBlackPage();
@@ -306,20 +440,18 @@ export const GeneratorForm = () => {
             yPosition += 6;
           });
         }
-        // Correct Answer
         else if (line.match(/Correct Answer:/i)) {
           pdf.setFontSize(11);
           pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(255, 80, 180); // Pink
+          pdf.setTextColor(255, 80, 180);
           if (yPosition > pageHeight - margin) addBlackPage();
           pdf.text(line.trim(), margin, yPosition);
           yPosition += 8;
         }
-        // Explanation
         else if (line.match(/Explanation:/i)) {
           pdf.setFontSize(9);
           pdf.setFont("helvetica", "italic");
-          pdf.setTextColor(200, 150, 200); // Lighter pink
+          pdf.setTextColor(200, 150, 200);
           const wrappedLines = pdf.splitTextToSize(line, maxWidth);
           wrappedLines.forEach((wLine: string) => {
             if (yPosition > pageHeight - margin) addBlackPage();
@@ -328,11 +460,10 @@ export const GeneratorForm = () => {
           });
           yPosition += 2;
         }
-        // Regular paragraph text
         else if (line.trim()) {
           pdf.setFontSize(10);
           pdf.setFont("helvetica", "normal");
-          pdf.setTextColor(255, 120, 200); // Light pink for regular text
+          pdf.setTextColor(255, 120, 200);
           const wrappedLines = pdf.splitTextToSize(line, maxWidth);
           wrappedLines.forEach((wLine: string) => {
             if (yPosition > pageHeight - margin) addBlackPage();
@@ -340,7 +471,6 @@ export const GeneratorForm = () => {
             yPosition += 6;
           });
         }
-        // Empty line
         else {
           yPosition += 4;
         }
@@ -354,6 +484,8 @@ export const GeneratorForm = () => {
     }
   };
 
+  const isAnyFileExtracting = uploadedFiles.some((f) => f.isExtracting);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
@@ -366,11 +498,71 @@ export const GeneratorForm = () => {
           placeholder="Paste your text, paragraphs, or concepts here..."
           className="min-h-[200px] bg-gradient-input border-none text-white placeholder:text-white/60 resize-none rounded-2xl shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)] transition-all duration-200 focus:scale-[1.01] focus:shadow-[0_0_20px_rgba(255,0,255,0.4),inset_0_2px_10px_rgba(0,0,0,0.3)]"
         />
+
+        {/* File Upload Section */}
+        <div className="mt-4">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept=".pdf,image/*"
+            multiple
+            className="hidden"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isAnyFileExtracting}
+            className="w-full border-dashed border-2 border-neon-purple/50 bg-black/30 hover:bg-neon-purple/20 hover:border-neon-purple text-white transition-all duration-200"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Upload PDF or Image
+          </Button>
+
+          {/* Uploaded Files List */}
+          {uploadedFiles.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {uploadedFiles.map((uploadedFile, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between bg-black/40 rounded-lg p-3 border border-neon-purple/20"
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {uploadedFile.type === "pdf" ? (
+                      <File className="w-4 h-4 text-neon-pink flex-shrink-0" />
+                    ) : (
+                      <FileImage className="w-4 h-4 text-neon-green flex-shrink-0" />
+                    )}
+                    <span className="text-sm text-white truncate">{uploadedFile.name}</span>
+                    {uploadedFile.isExtracting && (
+                      <div className="flex items-center gap-1 text-neon-purple">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <span className="text-xs">Extracting...</span>
+                      </div>
+                    )}
+                    {uploadedFile.extractedText && !uploadedFile.isExtracting && (
+                      <span className="text-xs text-neon-green">✓ Ready</span>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFile(uploadedFile)}
+                    className="text-muted-foreground hover:text-white hover:bg-destructive/20 p-1 h-auto"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
           <Button
             onClick={() => generateNotes("normal")}
-            disabled={isLoading}
+            disabled={isLoading || isAnyFileExtracting}
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(34,255,94,0.7)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_15px_rgba(34,255,94,0.5)]"
           >
             {isLoading && currentMode === "normal" ? (
@@ -383,7 +575,7 @@ export const GeneratorForm = () => {
           
           <Button
             onClick={() => generateNotes("summarise")}
-            disabled={isLoading}
+            disabled={isLoading || isAnyFileExtracting}
             className="w-full bg-neon-purple hover:bg-neon-purple/90 text-white font-semibold transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(180,0,255,0.7)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_15px_rgba(180,0,255,0.5)]"
           >
             {isLoading && currentMode === "summarise" ? (
@@ -396,7 +588,7 @@ export const GeneratorForm = () => {
           
           <Button
             onClick={() => generateNotes("important")}
-            disabled={isLoading}
+            disabled={isLoading || isAnyFileExtracting}
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(255,72,200,0.7)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_15px_rgba(255,72,200,0.5)]"
           >
             {isLoading && currentMode === "important" ? (
@@ -409,7 +601,7 @@ export const GeneratorForm = () => {
           
           <Button
             onClick={() => generateNotes("mcqs")}
-            disabled={isLoading}
+            disabled={isLoading || isAnyFileExtracting}
             className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(100,150,255,0.7)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_15px_rgba(100,150,255,0.5)]"
           >
             {isLoading && currentMode === "mcqs" ? (

@@ -2,3 +2,6 @@ project_id = "qwbhfpeywktfiummncfn"
 
 [functions.generate-notes]
 verify_jwt = false
+
+[functions.extract-text-from-image]
+verify_jwt = false
