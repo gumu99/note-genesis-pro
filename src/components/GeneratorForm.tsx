@@ -559,57 +559,61 @@ export const GeneratorForm = () => {
           )}
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
           <Button
             onClick={() => generateNotes("normal")}
             disabled={isLoading || isAnyFileExtracting}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(34,255,94,0.7)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_15px_rgba(34,255,94,0.5)]"
+            variant="outline"
+            className="w-full bg-black/50 border-2 border-primary/50 text-primary font-semibold transition-all duration-200 hover:scale-105 hover:bg-black/70 hover:border-primary hover:shadow-[0_0_15px_rgba(34,255,94,0.5)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_10px_rgba(34,255,94,0.3)]"
           >
             {isLoading && currentMode === "normal" ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-4 h-4 mr-2 animate-spin flex-shrink-0" />
             ) : (
-              <FileText className="w-4 h-4 mr-2" />
+              <FileText className="w-4 h-4 mr-2 flex-shrink-0" />
             )}
-            Generate Notes
+            <span className="truncate">Generate Notes</span>
           </Button>
           
           <Button
             onClick={() => generateNotes("summarise")}
             disabled={isLoading || isAnyFileExtracting}
-            className="w-full bg-neon-purple hover:bg-neon-purple/90 text-white font-semibold transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(180,0,255,0.7)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_15px_rgba(180,0,255,0.5)]"
+            variant="outline"
+            className="w-full bg-black/50 border-2 border-neon-purple/50 text-neon-purple font-semibold transition-all duration-200 hover:scale-105 hover:bg-black/70 hover:border-neon-purple hover:shadow-[0_0_15px_rgba(180,0,255,0.5)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_10px_rgba(180,0,255,0.3)]"
           >
             {isLoading && currentMode === "summarise" ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-4 h-4 mr-2 animate-spin flex-shrink-0" />
             ) : (
-              <BookOpen className="w-4 h-4 mr-2" />
+              <BookOpen className="w-4 h-4 mr-2 flex-shrink-0" />
             )}
-            Summarise Notes
+            <span className="truncate">Summarise Notes</span>
           </Button>
           
           <Button
             onClick={() => generateNotes("important")}
             disabled={isLoading || isAnyFileExtracting}
-            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(255,72,200,0.7)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_15px_rgba(255,72,200,0.5)]"
+            variant="outline"
+            className="w-full bg-black/50 border-2 border-accent/50 text-accent font-semibold transition-all duration-200 hover:scale-105 hover:bg-black/70 hover:border-accent hover:shadow-[0_0_15px_rgba(255,72,200,0.5)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_10px_rgba(255,72,200,0.3)]"
           >
             {isLoading && currentMode === "important" ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-4 h-4 mr-2 animate-spin flex-shrink-0" />
             ) : (
-              <Lightbulb className="w-4 h-4 mr-2" />
+              <Lightbulb className="w-4 h-4 mr-2 flex-shrink-0" />
             )}
-            Important Topics
+            <span className="truncate">Important Topics</span>
           </Button>
           
           <Button
             onClick={() => generateNotes("mcqs")}
             disabled={isLoading || isAnyFileExtracting}
-            className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(100,150,255,0.7)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_15px_rgba(100,150,255,0.5)]"
+            variant="outline"
+            className="w-full bg-black/50 border-2 border-secondary/50 text-secondary font-semibold transition-all duration-200 hover:scale-105 hover:bg-black/70 hover:border-secondary hover:shadow-[0_0_15px_rgba(100,150,255,0.5)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_10px_rgba(100,150,255,0.3)]"
           >
             {isLoading && currentMode === "mcqs" ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-4 h-4 mr-2 animate-spin flex-shrink-0" />
             ) : (
-              <HelpCircle className="w-4 h-4 mr-2" />
+              <HelpCircle className="w-4 h-4 mr-2 flex-shrink-0" />
             )}
-            MCQs
+            <span className="truncate">MCQs</span>
           </Button>
         </div>
       </Card>
