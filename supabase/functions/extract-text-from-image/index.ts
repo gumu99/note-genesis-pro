@@ -12,10 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, mimeType } = await req.json();
+    const { fileBase64, mimeType, fileType } = await req.json();
     
-    if (!imageBase64) {
-      throw new Error("Missing required parameter: imageBase64");
+    if (!fileBase64) {
+      throw new Error("Missing required parameter: fileBase64");
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -23,7 +23,45 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Extracting text from image using Lovable AI vision...");
+    console.log(`Extracting text from ${fileType || 'file'} using Lovable AI...`);
+
+    const systemPrompt = `You are a text extraction assistant. Your ONLY job is to extract ALL readable text from the provided ${fileType === 'pdf' ? 'PDF document' : 'image'}.
+
+RULES:
+- Extract EVERY line of text visible
+- Preserve the original structure and formatting as much as possible
+- Include headings, paragraphs, bullet points, numbered lists
+- Do NOT add any commentary, explanations, or summaries
+- Do NOT modify or interpret the text
+- Do NOT add markdown formatting that wasn't in the original
+- If there are tables, preserve the table structure using simple text formatting
+- If text is unclear, make your best attempt to read it
+- Output ONLY the extracted text, nothing else`;
+
+    const userContent: any[] = [
+      {
+        type: "text",
+        text: `Extract all text from this ${fileType === 'pdf' ? 'PDF document' : 'image'}. Return only the extracted text, nothing else.`
+      }
+    ];
+
+    // For images, include the image directly
+    if (fileType === 'image' || mimeType?.startsWith('image/')) {
+      userContent.push({
+        type: "image_url",
+        image_url: {
+          url: `data:${mimeType || 'image/png'};base64,${fileBase64}`
+        }
+      });
+    } else if (fileType === 'pdf') {
+      // For PDFs, we'll send it as a document (Gemini supports PDF)
+      userContent.push({
+        type: "image_url",
+        image_url: {
+          url: `data:application/pdf;base64,${fileBase64}`
+        }
+      });
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -34,36 +72,8 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          {
-            role: "system",
-            content: `You are a text extraction assistant. Your ONLY job is to extract ALL readable text from the provided image.
-
-RULES:
-- Extract EVERY line of text visible in the image
-- Preserve the original structure and formatting as much as possible
-- Include headings, paragraphs, bullet points, numbered lists
-- Do NOT add any commentary, explanations, or summaries
-- Do NOT modify or interpret the text
-- Do NOT add markdown formatting that wasn't in the original
-- If there are tables, preserve the table structure using simple text formatting
-- If text is unclear, make your best attempt to read it
-- Output ONLY the extracted text, nothing else`
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: "Extract all text from this image. Return only the extracted text, nothing else."
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:${mimeType || 'image/png'};base64,${imageBase64}`
-                }
-              }
-            ]
-          }
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent }
         ],
       }),
     });
@@ -96,7 +106,7 @@ RULES:
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error in extract-text-from-image function:", error);
+    console.error("Error in extract-text function:", error);
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
     return new Response(
       JSON.stringify({ error: errorMessage }),
