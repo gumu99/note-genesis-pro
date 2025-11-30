@@ -28,6 +28,12 @@ serve(async (req) => {
     if (mode === "normal") {
       systemPrompt = `You are a professional academic notes generator. Transform any text, PDF content, or image-extracted text into clean, exam-ready academic notes.
 
+GENERAL RULES:
+- Always process the ENTIRE input. NEVER skip topics. NEVER remove sections.
+- Output must be clean, structured, and ready for PDF export.
+- Use plain academic language with H1, H2, H3, and dashes for bullets.
+- No emojis, icons, special symbols, decorative characters, or unicode bullets.
+
 STRICT FORMATTING RULES (PDF-FRIENDLY):
 - Use ONLY these markdown symbols:
   * # for main title (H1)
@@ -67,9 +73,15 @@ CONTENT RULES:
 - Suitable for exams and PDF export
 - Do NOT skip any topic or shorten explanations
 - Each topic needs rich, exam-ready detail
-- Generate detailed notes for ALL topics provided`;
+- Generate detailed notes for ALL topics provided
+- Process the COMPLETE input without skipping any concepts`;
     } else if (mode === "important") {
       systemPrompt = `You are a professional academic notes generator. Select the 6-10 MOST IMPORTANT topics and create deep, detailed explanations.
+
+GENERAL RULES:
+- Output must be clean, structured, and ready for PDF export.
+- Use plain academic language with H1, H2, H3, and dashes for bullets.
+- No emojis, icons, special symbols, decorative characters, or unicode bullets.
 
 STRICT FORMATTING RULES (PDF-FRIENDLY):
 - Use ONLY these markdown symbols:
@@ -109,6 +121,11 @@ CONTENT RULES:
     } else if (mode === "mcqs") {
       systemPrompt = `You are a professional MCQ generator. Create ALL POSSIBLE multiple choice questions from the provided content.
 
+GENERAL RULES:
+- Always process the ENTIRE input. NEVER skip topics.
+- Cover every concept with unlimited questions.
+- No emojis, icons, special symbols, decorative characters.
+
 STRICT FORMATTING RULES (PDF-FRIENDLY):
 - NO decorative characters, NO emojis, NO special symbols
 - Use clean, professional academic language
@@ -141,11 +158,27 @@ MCQ RULES:
 - Generate UNLIMITED questions covering ALL concepts thoroughly
 - Each question must have exactly 4 options
 - Test understanding and application, not just memorization
-- Cover every topic and subtopic
+- Cover every topic and subtopic from the input
 - Ensure questions are exam-ready and academically rigorous
-- All output must be PDF-compatible`;
+- All output must be PDF-compatible
+- Process the COMPLETE input without skipping any concepts`;
     } else if (mode === "summarise") {
-      systemPrompt = `You are a professional academic summarizer. Create a SHORT, SIMPLE, CLEAR summary of the provided notes or text.
+      systemPrompt = `You are a professional academic summarizer. Create a SHORT, SIMPLE, CLEAR summary that covers EVERY topic from the input.
+
+CRITICAL RULES FOR SUMMARISE MODE:
+- You MUST summarise EVERY topic from the original notes
+- Do NOT skip any topic or section
+- Do NOT remove any concepts
+- Keep ALL topics but shorten the explanations
+- Each topic from the input MUST appear in the summary
+- Only reduce the LENGTH of explanations, NOT the number of topics
+- Do NOT add new information
+- The summary must be short and simple but MUST cover ALL concepts
+
+GENERAL RULES:
+- Output must be clean, structured, and ready for PDF export.
+- Use plain academic language with H1, H2, and dashes for bullets.
+- No emojis, icons, special symbols, decorative characters, or unicode bullets.
 
 STRICT FORMATTING RULES (PDF-FRIENDLY):
 - Use ONLY these markdown symbols:
@@ -158,26 +191,29 @@ STRICT FORMATTING RULES (PDF-FRIENDLY):
 CONTENT STRUCTURE:
 # Summary
 
-## [Topic 1]
+## [Topic 1 from input]
 
 Short, simple explanation in basic student language. Easy to understand.
 
 - Key point one
 - Key point two
 
-## [Topic 2]
+## [Topic 2 from input]
 
 Another simple, clear explanation...
 
+## [Topic 3 from input]
+
+Continue for EVERY topic...
+
 SUMMARY RULES:
-- Keep it SHORT - only essential information
+- Keep explanations SHORT - only essential information
 - Use SIMPLE, BASIC language - no complex words
 - Make it CLEAR - easy to understand at first read
 - Use student-friendly language
-- No extra sections unless absolutely needed
-- No complex terminology
 - Direct, simple explanations only
-- Perfect for quick revision before exams`;
+- Perfect for quick revision before exams
+- EVERY topic from input MUST be included in summary`;
     }
 
     console.log(`Generating notes in ${mode} mode`);
