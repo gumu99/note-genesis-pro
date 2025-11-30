@@ -324,11 +324,28 @@ export const GeneratorForm = () => {
       const maxWidth = pageWidth - 2 * margin;
       let yPosition = margin;
 
+      // Add beautiful branding header
+      pdf.setFontSize(8);
+      pdf.setFont("helvetica", "italic");
+      pdf.setTextColor(180, 0, 255);
+      pdf.textWithLink("Made with note-genesis-pro.lovable.app", pageWidth - margin - 55, 8, {
+        url: "https://note-genesis-pro.lovable.app/"
+      });
+      
+      yPosition = margin + 5;
+
       const addBlackPage = () => {
         pdf.addPage();
         pdf.setFillColor(0, 0, 0);
         pdf.rect(0, 0, pageWidth, pageHeight, 'F');
-        yPosition = margin;
+        // Add branding to each page
+        pdf.setFontSize(8);
+        pdf.setFont("helvetica", "italic");
+        pdf.setTextColor(180, 0, 255);
+        pdf.textWithLink("Made with note-genesis-pro.lovable.app", pageWidth - margin - 55, 8, {
+          url: "https://note-genesis-pro.lovable.app/"
+        });
+        yPosition = margin + 5;
       };
 
       const lines = generatedNotes.split("\n");
