@@ -5,10 +5,6 @@ import { Card } from "@/components/ui/card";
 import { FileText, Lightbulb, HelpCircle, Download, Loader2, BookOpen, Upload, X, FileImage, File } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
-import * as pdfjsLib from "pdfjs-dist";
-
-// Set up PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 type Mode = "normal" | "important" | "mcqs" | "summarise";
 
@@ -28,29 +24,7 @@ export const GeneratorForm = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const extractTextFromPDF = async (file: File): Promise<string> => {
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      let fullText = "";
-
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(" ");
-        fullText += pageText + "\n\n";
-      }
-
-      return fullText.trim();
-    } catch (error) {
-      console.error("Error extracting PDF text:", error);
-      throw new Error("Failed to extract text from PDF");
-    }
-  };
-
-  const extractTextFromImage = async (file: File): Promise<string> => {
+  const extractTextFromFile = async (file: File, fileType: "pdf" | "image"): Promise<string> => {
     try {
       // Convert file to base64
       const arrayBuffer = await file.arrayBuffer();
@@ -70,8 +44,9 @@ export const GeneratorForm = () => {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
-            imageBase64: base64,
+            fileBase64: base64,
             mimeType: file.type,
+            fileType: fileType,
           }),
         }
       );
@@ -82,13 +57,13 @@ export const GeneratorForm = () => {
         } else if (response.status === 402) {
           throw new Error("Payment required. Please add funds to your workspace.");
         }
-        throw new Error("Failed to extract text from image");
+        throw new Error(`Failed to extract text from ${fileType}`);
       }
 
       const data = await response.json();
       return data.text || "";
     } catch (error) {
-      console.error("Error extracting image text:", error);
+      console.error(`Error extracting ${fileType} text:`, error);
       throw error;
     }
   };
@@ -106,22 +81,19 @@ export const GeneratorForm = () => {
         continue;
       }
 
+      const fileType = isPDF ? "pdf" : "image";
+
       const newFile: UploadedFile = {
         file,
         name: file.name,
-        type: isPDF ? "pdf" : "image",
+        type: fileType,
         isExtracting: true,
       };
 
       setUploadedFiles((prev) => [...prev, newFile]);
 
       try {
-        let extractedText = "";
-        if (isPDF) {
-          extractedText = await extractTextFromPDF(file);
-        } else {
-          extractedText = await extractTextFromImage(file);
-        }
+        const extractedText = await extractTextFromFile(file, fileType);
 
         setUploadedFiles((prev) =>
           prev.map((f) =>
