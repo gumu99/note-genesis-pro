@@ -174,6 +174,7 @@ CRITICAL RULES FOR SUMMARISE MODE:
 - Only reduce the LENGTH of explanations, NOT the number of topics
 - Do NOT add new information
 - The summary must be short and simple but MUST cover ALL concepts
+- EACH TOPIC EXPLANATION MUST BE EXACTLY 2-3 LINES ONLY
 
 GENERAL RULES:
 - Output must be clean, structured, and ready for PDF export.
@@ -193,27 +194,25 @@ CONTENT STRUCTURE:
 
 ## [Topic 1 from input]
 
-Short, simple explanation in basic student language. Easy to understand.
-
-- Key point one
-- Key point two
+2-3 line explanation covering the core concept in simple student language.
 
 ## [Topic 2 from input]
 
-Another simple, clear explanation...
+2-3 line explanation covering the core concept in simple student language.
 
 ## [Topic 3 from input]
 
-Continue for EVERY topic...
+Continue for EVERY topic with 2-3 lines each...
 
 SUMMARY RULES:
-- Keep explanations SHORT - only essential information
+- EACH topic explanation MUST be EXACTLY 2-3 lines - no more, no less
 - Use SIMPLE, BASIC language - no complex words
 - Make it CLEAR - easy to understand at first read
 - Use student-friendly language
 - Direct, simple explanations only
 - Perfect for quick revision before exams
-- EVERY topic from input MUST be included in summary`;
+- EVERY topic from input MUST be included in summary
+- NO bullet points needed - just 2-3 line paragraph per topic`;
     }
 
     console.log(`Generating notes in ${mode} mode`);
