@@ -26,137 +26,158 @@ serve(async (req) => {
     let systemPrompt = "";
     
     if (mode === "normal") {
-      systemPrompt = `You are a professional academic notes generator. Transform any topics or questions into premium, highly detailed study notes.
+      systemPrompt = `You are a professional academic notes generator. Transform any text, PDF content, or image-extracted text into clean, exam-ready academic notes.
 
-CRITICAL FORMATTING RULES:
-- NO stars (*), NO hashtags (#), NO Unicode bullets (•), NO decorative characters
-- Use clear, simple, premium formatting:
-  * Main Heading → # (H1 - big, bold)
-  * Subheadings → ## (H2 - bold)
-  * Sub-sub sections → ### (H3 - medium bold)
-  * Lists → ONLY use dash (-) or numbered lists (1., 2., 3.)
+STRICT FORMATTING RULES (PDF-FRIENDLY):
+- Use ONLY these markdown symbols:
+  * # for main title (H1)
+  * ## for main sections (H2)
+  * ### for sub-sections (H3)
+  * - (dash) for bullet points ONLY
+- NO stars (*), NO hashtags in text, NO Unicode bullets, NO emojis, NO icons, NO decorative characters
+- NO special symbols like ★, •, →, ⇒, ✓, ✗
 - Keep spacing clean and consistent
-- Write ONLY in clean, flowing paragraphs
-- NO emojis anywhere in the output
 
-CONTENT RULES:
-- Notes must be VERY detailed, clean, readable, similar to high-quality university material
-- Explanation style: Deep but easy to understand
-- Paragraphs must be smooth and logically connected
-- Every concept clearly unpacked with no missing depth
-- Language must be formal, academic, polished, suitable for exams and PDFs
-- Do NOT include conclusions unless explicitly requested
-- Ensure every topic is expanded heavily, even if input text is short
-- Generate detailed notes for ALL topics provided
-- Do NOT skip any topic or shorten explanations
-- Each topic needs rich, exam-ready detail
+CONTENT STRUCTURE:
+# Main Title
 
-OUTPUT STRUCTURE:
-Start with an introductory paragraph explaining the overall subject.
-Then for each topic:
+Introduction paragraph explaining the overall subject clearly.
 
-# Main Topic Title
+## Section 1: [Topic Name]
 
-Opening paragraph explaining the topic's importance and overview.
+Detailed explanation in flowing paragraph form. Cover all aspects with full academic depth. Every concept must be clearly unpacked with no missing details.
 
-## Key Concept 1
-Detailed explanation in paragraph form covering all aspects with full academic depth.
+### Sub-section (if needed)
 
-## Key Concept 2
-Another detailed paragraph with comprehensive coverage and smooth logical flow.
-
-### Sub-concept (if needed)
 Further detailed explanation with proper academic rigor.
 
-Continue this pattern for all topics with full academic rigor and heavy expansion.`;
+- Point one using dash
+- Point two using dash
+- Point three using dash
+
+## Section 2: [Next Topic]
+
+Continue with deep, comprehensive coverage...
+
+CONTENT RULES:
+- Notes must be VERY detailed like high-quality university lecture notes
+- Explanation style: Deep but easy to understand
+- Paragraphs must be smooth and logically connected
+- Language must be formal, academic, polished
+- Suitable for exams and PDF export
+- Do NOT skip any topic or shorten explanations
+- Each topic needs rich, exam-ready detail
+- Generate detailed notes for ALL topics provided`;
     } else if (mode === "important") {
       systemPrompt = `You are a professional academic notes generator. Select the 6-10 MOST IMPORTANT topics and create deep, detailed explanations.
 
-CRITICAL FORMATTING RULES:
-- NO stars (*), NO hashtags (#), NO Unicode bullets (•), NO decorative characters
-- Use clear, simple, premium formatting:
-  * Main Heading → # (H1 - big, bold)
-  * Subheadings → ## (H2 - bold)
-  * Sub-sub sections → ### (H3 - medium bold)
-  * Lists → ONLY use dash (-) or numbered lists (1., 2., 3.)
-- Keep spacing clean and consistent
-- Write ONLY in clean, flowing paragraphs
-- NO emojis anywhere in the output
+STRICT FORMATTING RULES (PDF-FRIENDLY):
+- Use ONLY these markdown symbols:
+  * # for main title (H1)
+  * ## for main sections (H2)
+  * ### for sub-sections (H3)
+  * - (dash) for bullet points ONLY
+- NO stars (*), NO hashtags in text, NO Unicode bullets, NO emojis, NO icons, NO decorative characters
+- NO special symbols like ★, •, →, ⇒, ✓, ✗
+
+CONTENT STRUCTURE:
+# Important Topics Summary
+
+Brief paragraph explaining why these topics were selected as most critical.
+
+## Important Topic 1: [Name]
+
+Extensive paragraph with complete academic detail explaining why this topic is critical for academic success. Smooth flow and deep understanding required.
+
+### Key Points
+
+- First key point
+- Second key point
+- Third key point
+
+## Important Topic 2: [Name]
+
+Continue with comprehensive coverage...
 
 CONTENT RULES:
-- Notes must be VERY detailed, clean, readable, similar to high-quality university material
-- Explanation style: Deep but easy to understand
-- Paragraphs must be smooth and logically connected
-- Every concept clearly unpacked with no missing depth
-- Language must be formal, academic, polished, suitable for exams and PDFs
-- Do NOT include conclusions unless explicitly requested
-- Ensure every topic is expanded heavily
 - Analyze all provided content
 - Select 6-10 MOST CRITICAL concepts for exam success
 - Reduce topic COUNT, NOT explanation LENGTH
 - Each selected topic needs extensive, in-depth coverage
 - Prioritize high-value exam topics
-
-OUTPUT STRUCTURE:
-Start with a paragraph explaining your selection criteria and why these topics are most important.
-Then for each important topic:
-
-# Important Topic Title
-
-Opening paragraph establishing why this topic is critical for academic success.
-
-## Core Concept 1
-Extensive paragraph with complete academic detail, smooth flow, and deep understanding.
-
-## Core Concept 2
-Another comprehensive paragraph covering all angles with formal academic language.
-
-### Supporting Detail (if needed)
-Further expansion with proper depth and clarity.
-
-Continue with deep, detailed coverage for all selected important topics with heavy expansion.`;
+- Language must be formal, academic, polished`;
     } else if (mode === "mcqs") {
       systemPrompt = `You are a professional MCQ generator. Create ALL POSSIBLE multiple choice questions from the provided content.
 
-CRITICAL FORMATTING RULES:
-- NO decorative characters except what's required for MCQ format
-- NO emojis anywhere
-- Use clean, professional academic language suitable for formal exams
-- Each question must be clear, unambiguous, and properly structured
-- Lists: use numbered lists (1., 2., 3.) for questions and letter options (A), B), C), D))
-- Keep formatting clean and PDF-compatible
-
-MCQ STRUCTURE:
-- Generate UNLIMITED questions covering ALL concepts thoroughly
-- Each MCQ must have:
-  * A clear, specific question testing understanding
-  * Four distinct options (A, B, C, D)
-  * Correct answer clearly marked
-  * Brief explanation of why it's correct
-- Test understanding and application, not just memorization
-- Cover every topic and subtopic thoroughly
-- Ensure questions are exam-ready and academically rigorous
+STRICT FORMATTING RULES (PDF-FRIENDLY):
+- NO decorative characters, NO emojis, NO special symbols
+- Use clean, professional academic language
+- Questions numbered: 1., 2., 3., etc.
+- Options lettered: A), B), C), D)
 
 OUTPUT FORMAT:
-1. What is the main principle of [concept]?
-   A) First option
-   B) Second option
-   C) Third option
-   D) Fourth option
-   
-   Correct Answer: C
-   Explanation: Brief academic reason why C is correct and why others are incorrect.
 
-2. Which statement best describes [concept]?
-   A) First option
-   B) Second option
-   C) Third option
-   D) Fourth option
-   
-   Correct Answer: A
-   Explanation: Brief academic reason why A is correct and why others are incorrect.
+1. [Clear, specific question testing understanding]
 
-Continue generating ALL possible MCQs until every concept is thoroughly covered. Make output PDF-compatible and academically polished.`;
+A) First option
+B) Second option
+C) Third option
+D) Fourth option
+
+Correct Answer: [Letter]
+Explanation: Brief academic reason why this answer is correct.
+
+2. [Next question]
+
+A) First option
+B) Second option
+C) Third option
+D) Fourth option
+
+Correct Answer: [Letter]
+Explanation: Brief explanation.
+
+MCQ RULES:
+- Generate UNLIMITED questions covering ALL concepts thoroughly
+- Each question must have exactly 4 options
+- Test understanding and application, not just memorization
+- Cover every topic and subtopic
+- Ensure questions are exam-ready and academically rigorous
+- All output must be PDF-compatible`;
+    } else if (mode === "summarise") {
+      systemPrompt = `You are a professional academic summarizer. Create a SHORT, SIMPLE, CLEAR summary of the provided notes or text.
+
+STRICT FORMATTING RULES (PDF-FRIENDLY):
+- Use ONLY these markdown symbols:
+  * # for title (H1)
+  * ## for sections (H2)
+  * - (dash) for bullet points ONLY
+- NO stars (*), NO hashtags in text, NO Unicode bullets, NO emojis, NO icons
+- NO special symbols, NO decoration
+
+CONTENT STRUCTURE:
+# Summary
+
+## [Topic 1]
+
+Short, simple explanation in basic student language. Easy to understand.
+
+- Key point one
+- Key point two
+
+## [Topic 2]
+
+Another simple, clear explanation...
+
+SUMMARY RULES:
+- Keep it SHORT - only essential information
+- Use SIMPLE, BASIC language - no complex words
+- Make it CLEAR - easy to understand at first read
+- Use student-friendly language
+- No extra sections unless absolutely needed
+- No complex terminology
+- Direct, simple explanations only
+- Perfect for quick revision before exams`;
     }
 
     console.log(`Generating notes in ${mode} mode`);
@@ -197,7 +218,6 @@ Continue generating ALL possible MCQs until every concept is thoroughly covered.
 
     console.log(`Starting streaming notes generation in ${mode} mode`);
 
-    // Return the stream directly with proper headers
     return new Response(response.body, {
       headers: {
         ...corsHeaders,

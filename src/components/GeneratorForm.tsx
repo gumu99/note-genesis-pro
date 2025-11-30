@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { FileText, Lightbulb, HelpCircle, Download, Loader2 } from "lucide-react";
+import { FileText, Lightbulb, HelpCircle, Download, Loader2, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 
-type Mode = "normal" | "important" | "mcqs";
+type Mode = "normal" | "important" | "mcqs" | "summarise";
 
 export const GeneratorForm = () => {
   const [text, setText] = useState("");
@@ -154,13 +154,19 @@ export const GeneratorForm = () => {
       // Sub-subheadings (### ) with bullet points
       if (line.match(/^###\s+(.+?)$/)) {
         const heading = line.replace(/^###\s+/, '');
-        return `<h3 class="text-neon-green font-semibold text-lg mb-2 mt-3 ml-8">• ${heading}</h3>`;
+        return `<h3 class="text-neon-green font-semibold text-lg mb-2 mt-3 ml-8">- ${heading}</h3>`;
       }
       
       // Remove any remaining markdown symbols (####, #####, etc.)
       if (line.match(/^#{4,}\s+(.+?)$/)) {
         const heading = line.replace(/^#{4,}\s+/, '');
         return `<div class="text-neon-green font-medium text-base mb-2 mt-2 ml-12">- ${heading}</div>`;
+      }
+      
+      // Bullet points with dash
+      if (line.match(/^\s*-\s+(.+?)$/)) {
+        const content = line.replace(/^\s*-\s+/, '');
+        return `<div class="ml-8 mb-1 text-white">- ${content}</div>`;
       }
       
       // MCQ questions with green glow
@@ -233,59 +239,60 @@ export const GeneratorForm = () => {
           });
           yPosition += 3;
         } 
-        // Main headings in PINK (1. Definition / Core Idea)
-        else if (line.match(/^\d+\.\s*[A-Z]/)) {
-          pdf.setFontSize(13);
+        // Main headings (# ) in PINK
+        else if (line.match(/^#\s+/)) {
+          pdf.setFontSize(16);
           pdf.setFont("helvetica", "bold");
           pdf.setTextColor(255, 80, 180); // Bright pink
-          const wrappedLines = pdf.splitTextToSize(line, maxWidth);
-          wrappedLines.forEach((wLine: string) => {
-            if (yPosition > pageHeight - margin) addBlackPage();
-            pdf.text(wLine, margin, yPosition);
-            yPosition += 7;
-          });
-          yPosition += 2;
-        }
-        // Subheadings with markdown (##, ###)
-        else if (line.match(/^#+\s+/)) {
-          const level = (line.match(/^#+/) || [""])[0].length;
-          pdf.setFontSize(level === 1 ? 14 : level === 2 ? 12 : 11);
-          pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(255, 80, 180); // Pink
-          const cleanLine = line.replace(/^#+\s+/, "");
+          const cleanLine = line.replace(/^#\s+/, "");
           const wrappedLines = pdf.splitTextToSize(cleanLine, maxWidth);
           wrappedLines.forEach((wLine: string) => {
             if (yPosition > pageHeight - margin) addBlackPage();
             pdf.text(wLine, margin, yPosition);
+            yPosition += 9;
+          });
+          yPosition += 3;
+        }
+        // Subheadings (## ) in PINK
+        else if (line.match(/^##\s+/)) {
+          pdf.setFontSize(13);
+          pdf.setFont("helvetica", "bold");
+          pdf.setTextColor(255, 80, 180); // Pink
+          const cleanLine = line.replace(/^##\s+/, "");
+          const wrappedLines = pdf.splitTextToSize(cleanLine, maxWidth);
+          wrappedLines.forEach((wLine: string) => {
+            if (yPosition > pageHeight - margin) addBlackPage();
+            pdf.text(wLine, margin + 5, yPosition);
             yPosition += 7;
           });
           yPosition += 2;
         }
-        // Bullet points with bold terms
-        else if (line.match(/^\s*[•\-\*]\s*\*\*.+?\*\*:/)) {
-          pdf.setFontSize(10);
+        // Sub-subheadings (### ) in lighter pink
+        else if (line.match(/^###\s+/)) {
+          pdf.setFontSize(11);
           pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(255, 80, 180); // Pink for bold terms
-          const boldPart = (line.match(/\*\*(.+?)\*\*:/) || ["", ""])[1];
-          const restPart = line.split("**:")[1] || "";
-          
-          if (yPosition > pageHeight - margin) addBlackPage();
-          pdf.text(`• ${boldPart}:`, margin, yPosition);
-          
-          // Rest in lighter pink
-          pdf.setFont("helvetica", "normal");
-          pdf.setTextColor(255, 120, 200);
-          const wrappedRest = pdf.splitTextToSize(restPart.trim(), maxWidth - 10);
-          wrappedRest.forEach((wLine: string, idx: number) => {
-            if (idx === 0) {
-              pdf.text(wLine, margin + 35, yPosition);
-            } else {
-              yPosition += 5;
-              if (yPosition > pageHeight - margin) addBlackPage();
-              pdf.text(wLine, margin + 5, yPosition);
-            }
+          pdf.setTextColor(255, 120, 200); // Lighter pink
+          const cleanLine = line.replace(/^###\s+/, "");
+          const wrappedLines = pdf.splitTextToSize("- " + cleanLine, maxWidth - 10);
+          wrappedLines.forEach((wLine: string) => {
+            if (yPosition > pageHeight - margin) addBlackPage();
+            pdf.text(wLine, margin + 10, yPosition);
+            yPosition += 6;
           });
-          yPosition += 6;
+          yPosition += 2;
+        }
+        // Bullet points with dash
+        else if (line.match(/^\s*-\s+/)) {
+          pdf.setFontSize(10);
+          pdf.setFont("helvetica", "normal");
+          pdf.setTextColor(255, 120, 200); // Light pink
+          const cleanLine = line.replace(/^\s*-\s+/, "");
+          const wrappedLines = pdf.splitTextToSize("- " + cleanLine, maxWidth - 15);
+          wrappedLines.forEach((wLine: string) => {
+            if (yPosition > pageHeight - margin) addBlackPage();
+            pdf.text(wLine, margin + 10, yPosition);
+            yPosition += 6;
+          });
         }
         // Options (A, B, C, D)
         else if (line.match(/^\s*[-•]?\s*[A-D][\)\]]/)) {
@@ -360,7 +367,7 @@ export const GeneratorForm = () => {
           className="min-h-[200px] bg-gradient-input border-none text-white placeholder:text-white/60 resize-none rounded-2xl shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)] transition-all duration-200 focus:scale-[1.01] focus:shadow-[0_0_20px_rgba(255,0,255,0.4),inset_0_2px_10px_rgba(0,0,0,0.3)]"
         />
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
           <Button
             onClick={() => generateNotes("normal")}
             disabled={isLoading}
@@ -371,7 +378,20 @@ export const GeneratorForm = () => {
             ) : (
               <FileText className="w-4 h-4 mr-2" />
             )}
-            Normal Notes
+            Generate Notes
+          </Button>
+          
+          <Button
+            onClick={() => generateNotes("summarise")}
+            disabled={isLoading}
+            className="w-full bg-neon-purple hover:bg-neon-purple/90 text-white font-semibold transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(180,0,255,0.7)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_15px_rgba(180,0,255,0.5)]"
+          >
+            {isLoading && currentMode === "summarise" ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <BookOpen className="w-4 h-4 mr-2" />
+            )}
+            Summarise Notes
           </Button>
           
           <Button
@@ -403,10 +423,12 @@ export const GeneratorForm = () => {
       </Card>
 
       {isLoading && (
-        <div className="w-full bg-muted/50 rounded-full p-4 animate-pulse-glow">
-          <div className="flex items-center justify-center gap-2 text-neon-purple">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span className="font-medium">Generating...</span>
+        <div className="w-full bg-black/50 rounded-full p-6 border border-neon-purple/30">
+          <div className="flex items-center justify-center gap-3">
+            <Loader2 className="w-6 h-6 animate-spin text-neon-purple" />
+            <span className="text-2xl font-bold text-neon-purple animate-generating-pulse">
+              Generating...
+            </span>
           </div>
         </div>
       )}
@@ -414,7 +436,7 @@ export const GeneratorForm = () => {
       {generatedNotes && (
         <Card className={`p-6 border-neon-purple/30 animate-scale-in ${isLoading ? 'animate-box-flash-purple' : 'bg-[rgba(20,20,20,0.8)] shadow-[0_0_30px_rgba(180,0,255,0.6)]'}`}>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Generated Explanation</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">Generated Notes</h2>
             <div className="flex gap-2 flex-shrink-0">
               <Button
                 onClick={copyToClipboard}
