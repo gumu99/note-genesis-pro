@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Minus, UserPlus, Edit, MoreVertical, History, ChevronDown } from "lucide-react";
+import { MoreVertical, History, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DonateButton } from "./DonateButton";
 import { AboutDialog } from "./AboutDialog";
@@ -21,7 +21,7 @@ export const FloatingHeader = ({
 
   return (
     <>
-      {/* Left side - Collapse button */}
+      {/* Left side - History button */}
       <div
         className={cn(
           "fixed top-4 left-4 z-50",
@@ -42,7 +42,7 @@ export const FloatingHeader = ({
             "shadow-lg"
           )}
         >
-          <Minus className="w-5 h-5 text-foreground" />
+          <History className="w-5 h-5 text-foreground" />
         </button>
       </div>
 
@@ -59,18 +59,6 @@ export const FloatingHeader = ({
         }}
       >
         <div className="flex items-center bg-muted/90 backdrop-blur-sm rounded-full px-2 py-1.5 border border-border/50 shadow-lg">
-          {/* History icon */}
-          <button
-            className={cn(
-              "w-9 h-9 rounded-full flex items-center justify-center",
-              "text-foreground/80 hover:text-foreground",
-              "hover:bg-background/50 transition-all duration-200",
-              "hover:scale-110 active:scale-95"
-            )}
-          >
-            <History className="w-4 h-4" />
-          </button>
-
           {/* Donate */}
           <div className="hover:scale-110 active:scale-95 transition-transform duration-200">
             <DonateButton variant="icon" />
