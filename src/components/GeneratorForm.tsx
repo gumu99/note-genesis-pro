@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { FileText, Lightbulb, HelpCircle, Download, Loader2, BookOpen, Upload, X, FileImage, File } from "lucide-react";
+import { FileText, Lightbulb, HelpCircle, Download, Loader2, BookOpen, Upload, X, FileImage, File, Plus, Mic, AudioWaveform } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
+import { ModePopup } from "./ModePopup";
+import { cn } from "@/lib/utils";
 
 type Mode = "normal" | "important" | "mcqs" | "summarise";
 
@@ -22,11 +23,11 @@ export const GeneratorForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentMode, setCurrentMode] = useState<Mode | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isModePopupOpen, setIsModePopupOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const extractTextFromFile = async (file: File, fileType: "pdf" | "image"): Promise<string> => {
     try {
-      // Convert file to base64
       const arrayBuffer = await file.arrayBuffer();
       const base64 = btoa(
         new Uint8Array(arrayBuffer).reduce(
@@ -116,7 +117,6 @@ export const GeneratorForm = () => {
       }
     }
 
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -216,7 +216,6 @@ export const GeneratorForm = () => {
         }
       }
 
-      // Final flush
       if (textBuffer.trim()) {
         for (let raw of textBuffer.split("\n")) {
           if (!raw) continue;
@@ -324,7 +323,6 @@ export const GeneratorForm = () => {
       const maxWidth = pageWidth - 2 * margin;
       let yPosition = margin;
 
-      // Add beautiful branding header
       pdf.setFontSize(8);
       pdf.setFont("helvetica", "italic");
       pdf.setTextColor(180, 0, 255);
@@ -338,7 +336,6 @@ export const GeneratorForm = () => {
         pdf.addPage();
         pdf.setFillColor(0, 0, 0);
         pdf.rect(0, 0, pageWidth, pageHeight, 'F');
-        // Add branding to each page
         pdf.setFontSize(8);
         pdf.setFont("helvetica", "italic");
         pdf.setTextColor(180, 0, 255);
@@ -476,20 +473,102 @@ export const GeneratorForm = () => {
   const isAnyFileExtracting = uploadedFiles.some((f) => f.isExtracting);
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <Card className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
-        <label className="block text-foreground font-semibold mb-3">
-          Enter text, notes, or concepts to explain:
-        </label>
-        <Textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Paste your text, paragraphs, or concepts here..."
-          className="min-h-[200px] bg-gradient-input border-none text-white placeholder:text-white/60 resize-none rounded-2xl shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)] transition-all duration-200 focus:scale-[1.01] focus:shadow-[0_0_20px_rgba(255,0,255,0.4),inset_0_2px_10px_rgba(0,0,0,0.3)]"
-        />
+    <div className="flex flex-col min-h-[calc(100vh-120px)]">
+      {/* Main Content Area */}
+      <div className="flex-1 pb-32">
+        {/* Uploaded Files Display */}
+        {uploadedFiles.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {uploadedFiles.map((uploadedFile, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between bg-muted/50 backdrop-blur-sm rounded-xl p-3 border border-border/50"
+              >
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  {uploadedFile.type === "pdf" ? (
+                    <File className="w-4 h-4 text-neon-pink flex-shrink-0" />
+                  ) : (
+                    <FileImage className="w-4 h-4 text-neon-green flex-shrink-0" />
+                  )}
+                  <span className="text-sm text-foreground truncate">{uploadedFile.name}</span>
+                  {uploadedFile.isExtracting && (
+                    <div className="flex items-center gap-1 text-neon-purple">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span className="text-xs">Extracting...</span>
+                    </div>
+                  )}
+                  {uploadedFile.extractedText && !uploadedFile.isExtracting && (
+                    <span className="text-xs text-neon-green">Ready</span>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeFile(uploadedFile)}
+                  className="text-muted-foreground hover:text-foreground hover:bg-destructive/20 p-1 h-auto"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
 
-        {/* File Upload Section */}
-        <div className="mt-4">
+        {/* Generated Notes Display */}
+        {isLoading && (
+          <div className="w-full bg-muted/50 backdrop-blur-sm rounded-2xl p-6 border border-neon-purple/30 mb-4">
+            <div className="flex items-center justify-center gap-3">
+              <Loader2 className="w-6 h-6 animate-spin text-neon-purple" />
+              <span className="text-2xl font-bold text-neon-purple animate-generating-pulse">
+                Generating...
+              </span>
+            </div>
+          </div>
+        )}
+
+        {generatedNotes && (
+          <Card className={cn(
+            "p-6 border-neon-purple/30 animate-scale-in mb-4",
+            isLoading ? 'animate-box-flash-purple' : 'bg-card/80 backdrop-blur-sm shadow-[0_0_30px_rgba(180,0,255,0.3)]'
+          )}>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Generated Notes</h2>
+              <div className="flex gap-2 flex-shrink-0">
+                <Button
+                  onClick={copyToClipboard}
+                  variant="outline"
+                  size="sm"
+                  className="bg-foreground text-background border-foreground hover:bg-foreground/90 hover:scale-105 transition-all duration-200"
+                >
+                  Copy
+                </Button>
+                <Button
+                  onClick={downloadPDF}
+                  size="sm"
+                  className="bg-background text-foreground border-2 border-foreground hover:bg-muted hover:scale-105 transition-all duration-200"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF
+                </Button>
+              </div>
+            </div>
+            
+            <div className="bg-background/50 p-6 rounded-xl border border-neon-purple/20">
+              <div 
+                className="whitespace-pre-wrap text-foreground font-sans text-base leading-relaxed space-y-4"
+                dangerouslySetInnerHTML={{
+                  __html: formatNotesWithColors(generatedNotes, isLoading)
+                }}
+              />
+            </div>
+          </Card>
+        )}
+      </div>
+
+      {/* Fixed Bottom Input Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-background via-background to-transparent pt-8 pb-6 px-4">
+        <div className="max-w-2xl mx-auto">
+          {/* Hidden file input */}
           <input
             type="file"
             ref={fileInputRef}
@@ -498,160 +577,97 @@ export const GeneratorForm = () => {
             multiple
             className="hidden"
           />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isAnyFileExtracting}
-            className="w-full border-dashed border-2 border-neon-purple/50 bg-black/30 hover:bg-neon-purple/20 hover:border-neon-purple text-white transition-all duration-200"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Upload PDF or Image
-          </Button>
 
-          {/* Uploaded Files List */}
-          {uploadedFiles.length > 0 && (
-            <div className="mt-3 space-y-2">
-              {uploadedFiles.map((uploadedFile, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between bg-black/40 rounded-lg p-3 border border-neon-purple/20"
+          <div className="flex items-center gap-3 relative">
+            {/* Plus Button with Mode Popup */}
+            <div className="relative">
+              <ModePopup
+                isOpen={isModePopupOpen}
+                onClose={() => setIsModePopupOpen(false)}
+                onSelectMode={generateNotes}
+                isLoading={isLoading}
+                currentMode={currentMode}
+                disabled={isAnyFileExtracting || (!text.trim() && uploadedFiles.length === 0)}
+              />
+              <button
+                onClick={() => {
+                  if (!text.trim() && uploadedFiles.length === 0) {
+                    fileInputRef.current?.click();
+                  } else {
+                    setIsModePopupOpen(!isModePopupOpen);
+                  }
+                }}
+                disabled={isLoading}
+                className={cn(
+                  "flex-shrink-0 w-11 h-11 rounded-full bg-muted/90 backdrop-blur-sm flex items-center justify-center",
+                  "transition-all duration-200 hover:bg-muted hover:scale-105 active:scale-95",
+                  "border border-border/50",
+                  isLoading && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <Plus className={cn(
+                  "w-5 h-5 text-foreground transition-transform duration-200",
+                  isModePopupOpen && "rotate-45"
+                )} />
+              </button>
+            </div>
+
+            {/* Input Field */}
+            <div className="flex-1 relative">
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Enter your notes, text, or concepts..."
+                disabled={isLoading}
+                rows={1}
+                className={cn(
+                  "w-full min-h-[44px] max-h-32 px-4 py-3 pr-24 rounded-3xl resize-none",
+                  "bg-muted/90 backdrop-blur-sm border border-border/50",
+                  "text-foreground placeholder:text-muted-foreground",
+                  "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50",
+                  "transition-all duration-200",
+                  isLoading && "opacity-50 cursor-not-allowed"
+                )}
+                style={{
+                  height: "auto",
+                  overflow: "hidden",
+                }}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = "auto";
+                  target.style.height = Math.min(target.scrollHeight, 128) + "px";
+                }}
+              />
+
+              {/* Right side icons */}
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/50 transition-all"
+                  disabled={isLoading}
                 >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {uploadedFile.type === "pdf" ? (
-                      <File className="w-4 h-4 text-neon-pink flex-shrink-0" />
-                    ) : (
-                      <FileImage className="w-4 h-4 text-neon-green flex-shrink-0" />
-                    )}
-                    <span className="text-sm text-white truncate">{uploadedFile.name}</span>
-                    {uploadedFile.isExtracting && (
-                      <div className="flex items-center gap-1 text-neon-purple">
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                        <span className="text-xs">Extracting...</span>
-                      </div>
-                    )}
-                    {uploadedFile.extractedText && !uploadedFile.isExtracting && (
-                      <span className="text-xs text-neon-green">✓ Ready</span>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeFile(uploadedFile)}
-                    className="text-muted-foreground hover:text-white hover:bg-destructive/20 p-1 h-auto"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
-          <Button
-            onClick={() => generateNotes("normal")}
-            disabled={isLoading || isAnyFileExtracting}
-            variant="outline"
-            className="w-full bg-black/50 border-2 border-primary/50 text-primary font-semibold transition-all duration-200 hover:scale-105 hover:bg-black/70 hover:border-primary hover:shadow-[0_0_15px_rgba(34,255,94,0.5)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_10px_rgba(34,255,94,0.3)]"
-          >
-            {isLoading && currentMode === "normal" ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin flex-shrink-0" />
-            ) : (
-              <FileText className="w-4 h-4 mr-2 flex-shrink-0" />
-            )}
-            <span className="truncate">Generate Notes</span>
-          </Button>
-          
-          <Button
-            onClick={() => generateNotes("summarise")}
-            disabled={isLoading || isAnyFileExtracting}
-            variant="outline"
-            className="w-full bg-black/50 border-2 border-neon-purple/50 text-neon-purple font-semibold transition-all duration-200 hover:scale-105 hover:bg-black/70 hover:border-neon-purple hover:shadow-[0_0_15px_rgba(180,0,255,0.5)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_10px_rgba(180,0,255,0.3)]"
-          >
-            {isLoading && currentMode === "summarise" ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin flex-shrink-0" />
-            ) : (
-              <BookOpen className="w-4 h-4 mr-2 flex-shrink-0" />
-            )}
-            <span className="truncate">Summarise Notes</span>
-          </Button>
-          
-          <Button
-            onClick={() => generateNotes("important")}
-            disabled={isLoading || isAnyFileExtracting}
-            variant="outline"
-            className="w-full bg-black/50 border-2 border-accent/50 text-accent font-semibold transition-all duration-200 hover:scale-105 hover:bg-black/70 hover:border-accent hover:shadow-[0_0_15px_rgba(255,72,200,0.5)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_10px_rgba(255,72,200,0.3)]"
-          >
-            {isLoading && currentMode === "important" ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin flex-shrink-0" />
-            ) : (
-              <Lightbulb className="w-4 h-4 mr-2 flex-shrink-0" />
-            )}
-            <span className="truncate">Important Topics</span>
-          </Button>
-          
-          <Button
-            onClick={() => generateNotes("mcqs")}
-            disabled={isLoading || isAnyFileExtracting}
-            variant="outline"
-            className="w-full bg-black/50 border-2 border-secondary/50 text-secondary font-semibold transition-all duration-200 hover:scale-105 hover:bg-black/70 hover:border-secondary hover:shadow-[0_0_15px_rgba(100,150,255,0.5)] active:animate-button-press disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_10px_rgba(100,150,255,0.3)]"
-          >
-            {isLoading && currentMode === "mcqs" ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin flex-shrink-0" />
-            ) : (
-              <HelpCircle className="w-4 h-4 mr-2 flex-shrink-0" />
-            )}
-            <span className="truncate">MCQs</span>
-          </Button>
-        </div>
-      </Card>
-
-      {isLoading && (
-        <div className="w-full bg-black/50 rounded-full p-6 border border-neon-purple/30">
-          <div className="flex items-center justify-center gap-3">
-            <Loader2 className="w-6 h-6 animate-spin text-neon-purple" />
-            <span className="text-2xl font-bold text-neon-purple animate-generating-pulse">
-              Generating...
-            </span>
-          </div>
-        </div>
-      )}
-
-      {generatedNotes && (
-        <Card className={`p-6 border-neon-purple/30 animate-scale-in ${isLoading ? 'animate-box-flash-purple' : 'bg-[rgba(20,20,20,0.8)] shadow-[0_0_30px_rgba(180,0,255,0.6)]'}`}>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Generated Notes</h2>
-            <div className="flex gap-2 flex-shrink-0">
-              <Button
-                onClick={copyToClipboard}
-                variant="outline"
-                size="sm"
-                className="bg-white text-black border-white hover:bg-white/90 hover:scale-105 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] transition-all duration-200 active:animate-button-press"
-              >
-                Copy
-              </Button>
-              <Button
-                onClick={downloadPDF}
-                size="sm"
-                className="bg-black text-white border-2 border-white hover:bg-black/90 hover:scale-105 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] transition-all duration-200 active:animate-button-press"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download PDF
-              </Button>
+                  <Upload className="w-4 h-4" />
+                </button>
+                <button
+                  className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center",
+                    "bg-secondary text-secondary-foreground",
+                    "hover:opacity-90 transition-opacity"
+                  )}
+                  disabled={isLoading}
+                >
+                  <AudioWaveform className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
-          
-          <div className="bg-black/40 p-6 rounded-lg border border-neon-purple/20">
-            <div 
-              className="whitespace-pre-wrap text-white font-sans text-base leading-relaxed space-y-4"
-              dangerouslySetInnerHTML={{
-                __html: formatNotesWithColors(generatedNotes, isLoading)
-              }}
-            />
-          </div>
-        </Card>
-      )}
+
+          {/* Quick hint text */}
+          <p className="text-center text-xs text-muted-foreground mt-3">
+            Tap + to select mode: Generate Notes, Summarise, Important Topics, or MCQs
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

@@ -8,24 +8,41 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
-export const DonateButton = () => {
+interface DonateButtonProps {
+  variant?: "default" | "icon";
+}
+
+export const DonateButton = ({ variant = "default" }: DonateButtonProps) => {
   const upiLink = "upi://pay?pa=gumu642@okicici&pn=AI%20Notes%20Generator&cu=INR";
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all hover:scale-105"
-        >
-          <Heart className="w-4 h-4 mr-2 fill-current" />
-          Donate
-        </Button>
+        {variant === "icon" ? (
+          <button
+            className={cn(
+              "w-9 h-9 rounded-full flex items-center justify-center",
+              "text-primary hover:text-primary",
+              "hover:bg-primary/10 transition-all duration-200"
+            )}
+          >
+            <Heart className="w-4 h-4 fill-current" />
+          </button>
+        ) : (
+          <Button
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all hover:scale-105"
+          >
+            <Heart className="w-4 h-4 mr-2 fill-current" />
+            Donate
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-2xl text-foreground">Support Development ❤️</DialogTitle>
+          <DialogTitle className="text-2xl text-foreground">Support Development</DialogTitle>
           <DialogDescription className="text-muted-foreground">
             Even a small coffee helps maintain free access!
           </DialogDescription>
@@ -44,7 +61,7 @@ export const DonateButton = () => {
             Open UPI Payment
           </Button>
           <p className="text-xs text-center text-muted-foreground">
-            Your support keeps this tool free for all students 🙏
+            Your support keeps this tool free for all students
           </p>
         </div>
       </DialogContent>
