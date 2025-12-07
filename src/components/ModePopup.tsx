@@ -90,7 +90,7 @@ export const ModePopup = ({
         "animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 duration-200"
       )}
     >
-      <div className="flex flex-row gap-3">
+      <div className="flex flex-col gap-2 min-w-[180px]">
         {modeOptions.map((option, index) => {
           const Icon = option.icon;
           const isCurrentLoading = isLoading && currentMode === option.mode;
@@ -104,27 +104,27 @@ export const ModePopup = ({
               }}
               disabled={disabled || isLoading}
               className={cn(
-                "flex items-center gap-2 px-5 py-3 rounded-full",
+                "flex items-center gap-3 px-4 py-3 rounded-xl w-full",
                 "bg-background/80 border-2",
                 option.borderColor,
                 option.color,
                 option.hoverBg,
                 option.glowColor,
                 "transition-all duration-200",
-                "hover:scale-105 active:scale-95",
+                "hover:scale-[1.02] active:scale-[0.98]",
                 "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
-                "animate-in fade-in-0 zoom-in-95",
+                "animate-in fade-in-0 slide-in-from-bottom-2",
                 "whitespace-nowrap"
               )}
               style={{
-                animationDelay: `${index * 50}ms`,
+                animationDelay: `${index * 75}ms`,
                 animationFillMode: "backwards",
               }}
             >
               {isCurrentLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                <Loader2 className="w-5 h-5 animate-spin flex-shrink-0" />
               ) : (
-                <Icon className="w-4 h-4 flex-shrink-0" />
+                <Icon className="w-5 h-5 flex-shrink-0" />
               )}
               <span className="font-medium text-sm">{option.label}</span>
             </button>
