@@ -84,13 +84,13 @@ export const ModePopup = ({
     <div
       ref={popupRef}
       className={cn(
-        "absolute bottom-full left-0 mb-3",
-        "bg-card/95 backdrop-blur-md border border-border/50 rounded-2xl",
-        "p-3 shadow-xl",
+        "absolute bottom-full left-1/2 -translate-x-1/2 mb-4",
+        "bg-card/95 backdrop-blur-md border border-border/30 rounded-2xl",
+        "p-4 shadow-2xl",
         "animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 duration-200"
       )}
     >
-      <div className="flex flex-col gap-2 min-w-[200px]">
+      <div className="flex flex-row gap-3">
         {modeOptions.map((option, index) => {
           const Icon = option.icon;
           const isCurrentLoading = isLoading && currentMode === option.mode;
@@ -104,16 +104,17 @@ export const ModePopup = ({
               }}
               disabled={disabled || isLoading}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl",
-                "bg-background/50 border",
+                "flex items-center gap-2 px-5 py-3 rounded-full",
+                "bg-background/80 border-2",
                 option.borderColor,
                 option.color,
                 option.hoverBg,
                 option.glowColor,
                 "transition-all duration-200",
-                "hover:scale-[1.02] active:scale-[0.98]",
+                "hover:scale-105 active:scale-95",
                 "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
                 "animate-in fade-in-0 zoom-in-95",
+                "whitespace-nowrap"
               )}
               style={{
                 animationDelay: `${index * 50}ms`,
@@ -121,11 +122,11 @@ export const ModePopup = ({
               }}
             >
               {isCurrentLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin flex-shrink-0" />
+                <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
               ) : (
-                <Icon className="w-5 h-5 flex-shrink-0" />
+                <Icon className="w-4 h-4 flex-shrink-0" />
               )}
-              <span className="font-medium">{option.label}</span>
+              <span className="font-medium text-sm">{option.label}</span>
             </button>
           );
         })}
