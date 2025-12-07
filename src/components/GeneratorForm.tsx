@@ -163,15 +163,24 @@ export const GeneratorForm = () => {
         }
       );
 
-      if (!response.ok || !response.body) {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
         if (response.status === 429) {
           toast.error("Rate limit exceeded. Please try again later.");
         } else if (response.status === 402) {
-          toast.error("Payment required. Please add funds to your workspace.");
+          toast.error("Payment required. Please add credits to your Lovable workspace via Settings → Workspace → Usage.");
         } else {
-          toast.error("Failed to generate notes. Please try again.");
+          toast.error(errorData.error || "Failed to generate notes. Please try again.");
         }
         setIsLoading(false);
+        setCurrentMode(null);
+        return;
+      }
+
+      if (!response.body) {
+        toast.error("No response received. Please try again.");
+        setIsLoading(false);
+        setCurrentMode(null);
         return;
       }
 
