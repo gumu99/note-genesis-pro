@@ -18,9 +18,9 @@ serve(async (req) => {
       throw new Error("Missing required parameters: text and mode");
     }
 
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     let systemPrompt = "";
@@ -232,16 +232,16 @@ FINAL CHECK:
 - If input = 10, output must = 10. If input = 232, output must = 232.`;
     }
 
-    console.log(`Generating notes in ${mode} mode using OpenAI`);
+    console.log(`Generating notes in ${mode} mode using Lovable AI`);
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: text }
@@ -257,15 +257,21 @@ FINAL CHECK:
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Payment required. Please add credits to your Lovable workspace." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       if (response.status === 401) {
         return new Response(
-          JSON.stringify({ error: "Invalid API key. Please check your OpenAI API key." }),
+          JSON.stringify({ error: "Invalid API key. Please check your Lovable API key." }),
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       const errorText = await response.text();
-      console.error("OpenAI API error:", response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      console.error("Lovable AI API error:", response.status, errorText);
+      throw new Error(`Lovable AI API error: ${response.status}`);
     }
 
     console.log(`Starting streaming notes generation in ${mode} mode`);
