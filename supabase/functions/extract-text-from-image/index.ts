@@ -18,12 +18,12 @@ serve(async (req) => {
       throw new Error("Missing required parameter: fileBase64");
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not configured");
     }
 
-    console.log(`Extracting text from ${fileType || 'file'} using Lovable AI with advanced OCR...`);
+    console.log(`Extracting text from ${fileType || 'file'} using OpenAI with advanced OCR...`);
 
     const systemPrompt = `You are an advanced OCR and text extraction specialist. Your task is to extract ALL text from the provided ${fileType === 'pdf' ? 'PDF document' : 'image'}, including:
 
@@ -74,19 +74,20 @@ IMPORTANT: This may be a scanned document or photograph of text. Use your full O
       });
     }
 
-    // Use gemini-2.5-pro for better OCR accuracy on complex/scanned documents
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Use gpt-4o for vision capabilities
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent }
         ],
+        max_tokens: 4096,
       }),
     });
 
@@ -97,15 +98,15 @@ IMPORTANT: This may be a scanned document or photograph of text. Use your full O
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (response.status === 402) {
+      if (response.status === 401) {
         return new Response(
-          JSON.stringify({ error: "Payment required. Please add funds to your workspace." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Invalid API key. Please check your OpenAI API key." }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error(`AI gateway error: ${response.status}`);
+      console.error("OpenAI API error:", response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
     const data = await response.json();
